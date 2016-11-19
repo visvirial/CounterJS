@@ -1,0 +1,16 @@
+{
+  "name": "counterjs",
+  "version": "0.0.0",
+  "description": "Counterparty JavaScript/Node.js library.",
+  "author": "Vis Virial <visvirial@gmail.com>",
+  "keywords": [
+    "cryptocurrency",
+    "bitcoin",
+    "counterparty"
+  ],
+  "main": "src/index.js",
+  "dependencies": {
+    "long": "^3.2.0"
+  },
+  "devDependencies": {}
+}
