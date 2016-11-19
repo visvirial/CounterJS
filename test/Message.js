@@ -15,11 +15,18 @@ describe('Message', function() {
 	it('should encrypt correctly', function() {
 		assert.deepEqual(Message.fromSerialized(decrypted).toEncrypted(key), encrypted);
 	});
-	it('should create Send message correctly', function() {
-		var asset_id = 1;
-		var value = 100000000;
+	it('should create Issuance message correctly', function() {
+		var asset_id = Long.fromString('0000040d5cba2a73', true, 16);
+		var quantity = Long.fromString('100000000000', true);
 		assert.deepEqual(
-			Message.createSend(new Long(asset_id), new Long(value)).data,
+			Message.createIssuance(asset_id, quantity, true, false, 0, 0, '@visvirial').data,
+			Buffer.from('0000040d5cba2a73000000174876e800010000000000000000000a4076697376697269616c', 'hex'));
+	});
+	it('should create Send message correctly', function() {
+		var asset_id = new Long (1);
+		var quantity = Long.fromString('100000000');
+		assert.deepEqual(
+			Message.createSend(asset_id, quantity).data,
 			Buffer.from('00000000000000010000000005f5e100', 'hex'));
 	});
 });

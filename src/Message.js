@@ -88,8 +88,29 @@ Message.createExecute = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createIssuance = function() {
-	throw new Error('Not implemented');
+Message.createIssuance = function(asset_id, quantity, divisible, callable, call_date, call_price, description) {
+	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
+	var buf_quantity = Buffer.from(quantity.toBytesBE());
+	var buf_divisible = Buffer.from([divisible ? 1 : 0]);
+	var buf_callable = Buffer.from([callable ? 1 : 0]);
+	var buf_call_date = Buffer.alloc(4);
+	buf_call_date.writeUInt32BE(call_date || 0);
+	var buf_call_price = Buffer.alloc(4);
+	buf_call_price.writeFloatBE(call_price);
+	var buf_description = Buffer.from(description);
+	// "Pascal-style" serialization (the first byte is the length of a string)
+	if(description.length <= 42) {
+		buf_description = Buffer.concat([Buffer.from([description.length]), buf_description]);
+	}
+	return new Message(xcputil.PREFIX, 0, Buffer.concat([
+		buf_asset_id,
+		buf_quantity,
+		buf_divisible,
+		buf_callable,
+		buf_call_date,
+		buf_call_price,
+		buf_description,
+	]));
 };
 
 Message.createOrder = function() {
@@ -109,14 +130,12 @@ Message.createRPSResolve = function() {
 };
 
 Message.createSend = function(asset_id, quantity) {
-	var data = Buffer.alloc(16);
-	// 0-7: Integer asset_id.
-	data.writeUInt32BE(asset_id.high, 0);
-	data.writeUInt32BE(asset_id.low, 4);
-	// 8-15: Integer quantity.
-	data.writeUInt32BE(quantity.high, 8);
-	data.writeUInt32BE(quantity.low, 12);
-	return new Message(xcputil.PREFIX, 0, data);
+	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
+	var buf_quantity = Buffer.from(quantity.toBytesBE());
+	return new Message(xcputil.PREFIX, 0, Buffer.concat([
+		buf_asset_id,
+		buf_quantity,
+	]));
 };
 
 module.exports = Message;
