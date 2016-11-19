@@ -150,8 +150,22 @@ Message.createIssuance = function(asset_id, quantity, divisible, callable, call_
 	]));
 };
 
-Message.createOrder = function() {
-	throw new Error('Not implemented');
+Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required) {
+	var buf_give_id = Buffer.from(give_id.toBytesBE());
+	var buf_give_quantity = Buffer.from(give_quantity.toBytesBE());
+	var buf_get_id = Buffer.from(get_id.toBytesBE());
+	var buf_get_quantity = Buffer.from(get_quantity.toBytesBE());
+	var buf_expiration = Buffer.alloc(2);
+	buf_expiration.writeUInt16BE(expiration);
+	var buf_fee_required = Buffer.from(fee_required.toBytesBE());
+	return new Message(util.PREFIX, 0, Buffer.concat([
+		buf_give_id,
+		buf_give_quantity,
+		buf_get_id,
+		buf_get_quantity,
+		buf_expiration,
+		buf_fee_required,
+	]));
 };
 
 Message.createPublish = function() {

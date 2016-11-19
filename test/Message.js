@@ -22,6 +22,17 @@ describe('Message', function() {
 			Message.createIssuance(asset_id, quantity, true, false, 0, 0, '@visvirial').data,
 			Buffer.from('0000040d5cba2a73000000174876e800010000000000000000000a4076697376697269616c', 'hex'));
 	});
+	it('should create Order message correctly', function() {
+		var give_id = Long.fromString('0000040d5cba2a73', true, 16);
+		var give_quantity = Long.fromString('1000000000', true);
+		var get_id = Long.fromInt(1);
+		var get_quantity = Long.fromString('123000000000', true);
+		var expiration = 1000;
+		var fee_required = Long.fromInt(0);
+		assert.deepEqual(
+			Message.createOrder(give_id, give_quantity, get_id, get_quantity, expiration, fee_required).data,
+			Buffer.from('0000040d5cba2a73000000003b9aca0000000000000000010000001ca35f0e0003e80000000000000000', 'hex'));
+	});
 	it('should create Send message correctly', function() {
 		var asset_id = new Long (1);
 		var quantity = Long.fromString('100000000');
