@@ -11,7 +11,11 @@ describe('util', function() {
 		var decrypted = Buffer.from('434e545250525459000000148322228e656758700000000000000000010000000000000000000466756761', 'hex');
 		assert.deepEqual(util.arc4(key, encrypted), decrypted);
 	});
-	it('should recover asset name from ID', function() {
+	it('should recover numeric asset name from ID', function() {
+		var asset_id = Long.fromString('ac59c7c2fd194d10', true, 16);
+		assert.equal(util.assetIdToName(asset_id), 'A12419177087734730000');
+	});
+	it('should recover alphabetic asset name from ID', function() {
 		var asset_id = Long.fromString('0000040d5cba2a73', true, 16);
 		assert.equal(util.assetIdToName(asset_id), 'VISVIRIAL');
 	});
