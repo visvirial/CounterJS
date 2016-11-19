@@ -1,5 +1,6 @@
 
-var xcputil = require('./util');
+var Long = require('long');
+var util = require('./util');
 
 /**
  * Create a new Message instance.
@@ -24,7 +25,45 @@ Message.prototype.toSerialized = function() {
 }
 
 Message.prototype.toEncrypted = function(key) {
-	return xcputil.arc4(key, this.toSerialized());
+	return util.arc4(key, this.toSerialized());
+}
+
+Message.prototype.parse = function() {
+	var type;
+	var data = {};
+	switch(this.id) {
+		case 0:
+			type = 'Send';
+			if(this.data.length != 16) {
+				data.error = 'Invalid data length';
+				break;
+			}
+			data.asset_id = new Long(this.data.readUInt32BE(4), this.data.readUInt32BE(0), true);
+			data.quantity = new Long(this.data.readUInt32BE(12), this.data.readUInt32BE(8), true);
+			break;
+		default:
+			type = 'Unknown';
+			data.error = 'Unknown ID: ' + this.id;
+	}
+	return {
+		type: type,
+		data: data,
+	};
+};
+
+Message.prototype.toJSON = function() {
+	var parse = this.parse();
+	parse.data.hex = this.data.toString('hex');
+	return {
+		prefix: this.prefix,
+		id: this.id,
+		type: parse.type,
+		data: parse.data,
+	};
+}
+
+Message.prototype.toString = function() {
+	return JSON.stringify(this.toJSON(), null, '\t');
 }
 
 /**
@@ -50,7 +89,7 @@ Message.fromSerialized = function(ser) {
  * @param Buffer data The data chunk embedded in a transaction.
  */
 Message.fromEncrypted = function(key, data) {
-	return Message.fromSerialized(xcputil.arc4(key, data));
+	return Message.fromSerialized(util.arc4(key, data));
 }
 
 
@@ -67,9 +106,7 @@ Message.createBTCPay = function() {
 	throw new Error('Not implemented');
 };
 
-/* 
- * "Burn" message is just a normal bitcoin transfer transaction. We do not implement here.
- */
+/* "Burn" message is just a normal bitcoin transfer transaction. We do not implement here. */
 //Message.createBurn = function() {};
 
 Message.createCancel = function() {
@@ -102,7 +139,7 @@ Message.createIssuance = function(asset_id, quantity, divisible, callable, call_
 	if(description.length <= 42) {
 		buf_description = Buffer.concat([Buffer.from([description.length]), buf_description]);
 	}
-	return new Message(xcputil.PREFIX, 0, Buffer.concat([
+	return new Message(util.PREFIX, 0, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
 		buf_divisible,
@@ -121,18 +158,14 @@ Message.createPublish = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createRPS = function() {
-	throw new Error('Not implemented');
-};
-
-Message.createRPSResolve = function() {
-	throw new Error('Not implemented');
-};
+/* Rock-Paper-Scissors type message is removed. We will not implement here. */
+//Message.createRPS = function() {};
+//Message.createRPSResolve = function() {};
 
 Message.createSend = function(asset_id, quantity) {
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
 	var buf_quantity = Buffer.from(quantity.toBytesBE());
-	return new Message(xcputil.PREFIX, 0, Buffer.concat([
+	return new Message(util.PREFIX, 0, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
 	]));
