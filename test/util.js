@@ -12,12 +12,16 @@ describe('util', function() {
 		assert.deepEqual(util.arc4(key, encrypted), decrypted);
 	});
 	it('should recover numeric asset name from ID', function() {
-		var asset_id = Long.fromString('ac59c7c2fd194d10', true, 16);
-		assert.equal(util.assetIdToName(asset_id), 'A12419177087734730000');
+		assert.equal(util.assetIdToName(Long.fromString('ac59c7c2fd194d10', true, 16)), 'A12419177087734730000');
 	});
 	it('should recover alphabetic asset name from ID', function() {
-		var asset_id = Long.fromString('0000040d5cba2a73', true, 16);
-		assert.equal(util.assetIdToName(asset_id), 'VISVIRIAL');
+		assert.equal(util.assetIdToName(Long.fromString('0000040d5cba2a73', true, 16)), 'VISVIRIAL');
+	});
+	it('should recover asset ID from numeric asset name', function() {
+		assert(util.assetNameToId('A12419177087734730000').equals(Long.fromString('ac59c7c2fd194d10', true, 16)));
+	});
+	it('should recover asset ID from alphabetic asset name', function() {
+		assert(util.assetNameToId('VISVIRIAL').equals(Long.fromString('0000040d5cba2a73', true, 16)));
 	});
 });
 

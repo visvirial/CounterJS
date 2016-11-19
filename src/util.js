@@ -35,6 +35,7 @@ util.assetIdToName = function(asset_id) {
 	if(asset_id.lessThan(26 * 26 * 26)) {
 		throw new Error('Asset ID is too low');
 	}
+	// We assume numeric asset is enabled.
 	if(asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176'))) {
 		return 'A' + asset_id.toString();
 	}
@@ -45,6 +46,39 @@ util.assetIdToName = function(asset_id) {
 		asset_name = util.B26DIGITS[r] + asset_name;
 	}
 	return asset_name;
+};
+
+util.assetNameToId = function(asset_name) {
+	if(asset_name == 'BTC') return Long.fromInt(0);
+	if(asset_name == 'XCP') return Long.fromInt(1);
+	if(asset_name.length < 4) {
+		throw new Error('Asset name is too short');
+	}
+	// We assume numeric asset is enabled.
+	if(asset_name[0] == 'A') {
+		// Check the format
+		if(!asset_name.match(/^A[0-9]+$/)) {
+			throw new Error('Non-numeric asset name should not start with "A"');
+		}
+		var asset_id = Long.fromString(asset_name.substr(1), true);
+		if(!asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176', true))) {
+			throw new Error('Asset ID is too small');
+		}
+		return asset_id;
+	}
+	if(asset_name.length >= 13) {
+		throw new Error('Asset name is too long');
+	}
+	var asset_id = Long.fromInt(0);
+	for(var c of asset_name) {
+		var n = util.B26DIGITS.search(c);
+		if(n < 0) throw new Error('Invalid character: ' + c);
+		asset_id = asset_id.multiply(26).add(n);
+	}
+	if(asset_id.lessThan(26 * 26 * 26)) {
+		throw new Error('Asset ID is too low');
+	}
+	return asset_id
 };
 
 module.exports = util;
