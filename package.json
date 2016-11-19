@@ -9,8 +9,13 @@
     "counterparty"
   ],
   "main": "src/index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha"
+  },
   "dependencies": {
     "long": "^3.2.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "mocha": "^3.1.2"
+  }
 }
