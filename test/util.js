@@ -11,6 +11,11 @@ describe('util', function() {
 		var decrypted = Buffer.from('434e545250525459000000148322228e656758700000000000000000010000000000000000000466756761', 'hex');
 		assert.deepEqual(util.arc4(key, encrypted), decrypted);
 	});
+	it('should generate an address from a mnemonic code', function() {
+		var mnemonic = 'spot continue stumble wipe crimson cause sword school blur music sob through';
+		var priv = util.mnemonicToPrivateKey(mnemonic, 0);
+		assert.equal(priv, 'L5WSPy4TdW1x7HAxwRC2QMzpLfAvJD3cu6un9TSr6tA5yRbXqSa7');
+	});
 	it('should recover numeric asset name from ID', function() {
 		assert.equal(util.assetIdToName(Long.fromString('ac59c7c2fd194d10', true, 16)), 'A12419177087734730000');
 	});

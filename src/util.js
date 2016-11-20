@@ -1,10 +1,13 @@
 
+var crypto = require('crypto');
 var Long = require('long');
+var bitcoin = require('bitcoinjs-lib');
 
 var util = {};
 
 util.PREFIX = 'CNTRPRTY';
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+util.MNEMONIC_WORDS = require('./mnemonic_words.json');
 
 /**
  * Encrypt/Decrypt given data using (A)RC4.
@@ -27,6 +30,44 @@ util.arc4 = function(key, data) {
 		ret.push(data[x] ^ K);
 	}
 	return Buffer.from(ret);
+}
+
+/**
+ * Recover a WIF from a given passphrase.
+ * @param passphrase If array of length 2, [menmonic, password]. Otherwise, mnemonic.
+ * @return String WIF format private key.
+ */
+util.mnemonicToPrivateKey = function(passphrase, index) {
+	if(passphrase.length == 2) {
+		throw new Error('Password is not implemented yet');
+	} else {
+		var mnemonic = passphrase;
+	}
+	if(typeof mnemonic == 'string') {
+		mnemonic = mnemonic.split(' ');
+	}
+	if(typeof mnemonic != 'object') {
+		throw new Error('Gieven mnemonic is an invalid type: ' + (typeof mnemonic));
+	}
+	if(mnemonic.length%3 != 0) {
+		throw new Error('The length of mnemonic array should be divisible by 3');
+	}
+	var seed = Buffer.alloc(4*mnemonic.length/3);
+	const N = util.MNEMONIC_WORDS.length;
+	var mod = function(a, b) {
+		return a - Math.floor(a/b)*b;
+	};
+	for(var i=0; i<mnemonic.length/3; i++) {
+		var w1 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+0]);
+		var w2 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+1]);
+		var w3 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+2]);
+		if(w1<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+0]);
+		if(w2<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+1]);
+		if(w3<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+2]);
+		seed.writeUInt32BE(w1 + N*mod(w2-w1, N) + N*N*mod(w3-w2, N), 4*i);
+	}
+	var master = bitcoin.HDNode.fromSeedBuffer(seed);
+	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
 }
 
 util.assetIdToName = function(asset_id) {
