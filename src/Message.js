@@ -148,7 +148,7 @@ Message.createIssuance = function(asset, quantity, divisible, callable, call_dat
 	if(description.length <= 42) {
 		buf_description = Buffer.concat([Buffer.from([description.length]), buf_description]);
 	}
-	return new Message(0, Buffer.concat([
+	return new Message(20, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
 		buf_divisible,
@@ -174,7 +174,7 @@ Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, exp
 	var buf_expiration = Buffer.alloc(2);
 	buf_expiration.writeUInt16BE(expiration);
 	var buf_fee_required = Buffer.from(fee_required.toBytesBE());
-	return new Message(0, Buffer.concat([
+	return new Message(10, Buffer.concat([
 		buf_give_id,
 		buf_give_quantity,
 		buf_get_id,
