@@ -157,12 +157,12 @@ util.toAssetId = function(asset) {
 /**
  * Build a new Counterparty transaction.
  * @param Array inputs Each item should contain "String txid" and "Integer vout".
- * @param Array destinations Destination outputs. Item should contain "String address" and optionally "Integer value (default=5430)".
- * @param Message[] message The message object.
+ * @param String/Object dest Destination output. Address for string. For object, format is {address: DEST_ADDR, value: SEND_AMOUNT}. If dest.value is omitted, the dust threashold (5430 satoshis) is assumed.
+ * @param Message message A message to send.
  * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: FEE_TO_PAY}.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
-util.buildTransaction = function(inputs, destinations, messages, change, network) {
+util.buildTransaction = function(inputs, dest, message, change, network) {
 	var tx = new bitcoin.Transaction();
 	// Add inputs.
 	for(var i in inputs) {
@@ -170,20 +170,16 @@ util.buildTransaction = function(inputs, destinations, messages, change, network
 		var hash = Buffer.from(input.txid.match(/.{2}/g).reverse().join(''), 'hex');
 		tx.addInput(hash, input.vout);
 	}
-	// Add destination outputs.
-	for(var i in destinations) {
-		var dest = destinations[i];
-		if(typeof dest.value == 'undefined') {
-			dest.value = 5430;
-		}
-		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
+	// Add destination output.
+	if(typeof dest == 'string') {
+		dest = {
+			address: dest,
+			value: 5430,
+		};
 	}
-	// Add messages.
-	for(var i in messages) {
-		var msg = messages[i];
-		var data = msg.toEncrypted(Buffer.from(inputs[0].txid, 'hex'));
-		tx.addOutput(bitcoin.script.nullDataOutput(data), 0);
-	}
+	tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
+	// Add message.
+	tx.addOutput(bitcoin.script.nullDataOutput(message.toEncrypted(inputs[0].txid)), 0);
 	// Add change.
 	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
 	return tx.toBuffer();
