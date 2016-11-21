@@ -124,7 +124,8 @@ util.assetNameToId = function(asset_name) {
 		throw new Error('Asset name is too long');
 	}
 	var asset_id = Long.fromInt(0);
-	for(var c of asset_name) {
+	for(var i in asset_name) {
+		var c = asset_name[i];
 		var n = util.B26DIGITS.search(c);
 		if(n < 0) throw new Error('Invalid character: ' + c);
 		asset_id = asset_id.multiply(26).add(n);
@@ -164,19 +165,22 @@ util.toAssetId = function(asset) {
 util.buildTransaction = function(inputs, destinations, messages, change, network) {
 	var tx = new bitcoin.Transaction();
 	// Add inputs.
-	for(var input of inputs) {
+	for(var i in inputs) {
+		var input = inputs[i];
 		var hash = Buffer.from(input.txid.match(/.{2}/g).reverse().join(''), 'hex');
 		tx.addInput(hash, input.vout);
 	}
 	// Add destination outputs.
-	for(var dest of destinations) {
+	for(var i in destinations) {
+		var dest = destinations[i];
 		if(typeof dest.value == 'undefined') {
 			dest.value = 5430;
 		}
 		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
 	}
 	// Add messages.
-	for(var msg of messages) {
+	for(var i in messages) {
+		var msg = messages[i];
 		var data = msg.toEncrypted(Buffer.from(inputs[0].txid, 'hex'));
 		tx.addOutput(bitcoin.script.nullDataOutput(data), 0);
 	}
