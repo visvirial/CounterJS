@@ -49,7 +49,7 @@ util.arc4 = function(key, data) {
  * @param passphrase If array of length 2, [menmonic, password]. Otherwise, mnemonic.
  * @return String WIF format private key.
  */
-util.mnemonicToPrivateKey = function(passphrase, index) {
+util.mnemonicToPrivateKey = function(passphrase, index, network) {
 	if(passphrase.length == 2) {
 		throw new Error('Password is not implemented yet');
 	} else {
@@ -78,7 +78,7 @@ util.mnemonicToPrivateKey = function(passphrase, index) {
 		if(w3<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+2]);
 		seed.writeUInt32BE(w1 + N*mod(w2-w1, N) + N*N*mod(w3-w2, N), 4*i);
 	}
-	var master = bitcoin.HDNode.fromSeedBuffer(seed);
+	var master = bitcoin.HDNode.fromSeedBuffer(seed, util.getBitcoinJSNetwork(network));
 	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
 }
 
