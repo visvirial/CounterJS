@@ -5,7 +5,6 @@ var bitcoin = require('bitcoinjs-lib');
 
 var util = {};
 
-util.PREFIX = 'CNTRPRTY';
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 util.MNEMONIC_WORDS = require('./mnemonic_words.json');
 

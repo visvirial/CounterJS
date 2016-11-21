@@ -4,12 +4,12 @@ var util = require('./util');
 
 /**
  * Create a new Message instance.
- * @param String prefix CNTRPRTY for mainnet, XX for testnet.
  * @param Integer id Message id.
  * @param Buffer data Serialized data.
+ * @param String prefix Default = CNTRPRTY.
  */
-var Message = function(prefix, id, data) {
-	this.prefix = prefix;
+var Message = function(id, data, prefix) {
+	this.prefix = prefix || 'CNTRPRTY';
 	this.id = id;
 	this.data = data;
 };
@@ -86,7 +86,7 @@ Message.fromSerialized = function(ser) {
 	if(ser.length < prefix.length + 4) throw new Error('Insufficient data length');
 	var id = ser.readUInt32BE(prefix.length);
 	var data = ser.slice(prefix.length+4);
-	return new Message(prefix, id, data);
+	return new Message(id, data, prefix);
 }
 
 /**
@@ -148,7 +148,7 @@ Message.createIssuance = function(asset, quantity, divisible, callable, call_dat
 	if(description.length <= 42) {
 		buf_description = Buffer.concat([Buffer.from([description.length]), buf_description]);
 	}
-	return new Message(util.PREFIX, 0, Buffer.concat([
+	return new Message(0, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
 		buf_divisible,
@@ -174,7 +174,7 @@ Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, exp
 	var buf_expiration = Buffer.alloc(2);
 	buf_expiration.writeUInt16BE(expiration);
 	var buf_fee_required = Buffer.from(fee_required.toBytesBE());
-	return new Message(util.PREFIX, 0, Buffer.concat([
+	return new Message(0, Buffer.concat([
 		buf_give_id,
 		buf_give_quantity,
 		buf_get_id,
@@ -199,7 +199,7 @@ Message.createSend = function(asset, quantity) {
 	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
 	var buf_quantity = Buffer.from(quantity.toBytesBE());
-	return new Message(util.PREFIX, 0, Buffer.concat([
+	return new Message(0, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
 	]));
