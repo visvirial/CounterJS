@@ -159,7 +159,7 @@ util.toAssetId = function(asset) {
  * @param Array inputs Each item should contain "String txid" and "Integer vout".
  * @param String/Object dest Destination output. Address for string. For object, format is {address: DEST_ADDR, value: SEND_AMOUNT}. If dest.value is omitted, the dust threashold (5430 satoshis) is assumed.
  * @param Message message A message to send.
- * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: FEE_TO_PAY}.
+ * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: AMOUNT, fee_per_kb: FEE_PER_KB}. If fee_per_kb is specified, the fee amount will be determined from a transaction size and `value` will be ignored.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
 util.buildTransaction = function(inputs, dest, message, change, network) {
@@ -181,6 +181,7 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 	// Add message.
 	tx.addOutput(bitcoin.script.nullDataOutput(message.toEncrypted(inputs[0].txid)), 0);
 	// Add change.
+	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
 	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
 	return tx.toBuffer();
 }
