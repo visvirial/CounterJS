@@ -171,13 +171,15 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 		tx.addInput(hash, input.vout);
 	}
 	// Add destination output.
-	if(typeof dest == 'string') {
-		dest = {
-			address: dest,
-			value: 5430,
-		};
+	if(dest) {
+		if(typeof dest == 'string') {
+			dest = {
+				address: dest,
+				value: 5430,
+			};
+		}
+		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
 	}
-	tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
 	// Add message.
 	tx.addOutput(bitcoin.script.nullDataOutput(message.toEncrypted(inputs[0].txid)), 0);
 	// Add change.
