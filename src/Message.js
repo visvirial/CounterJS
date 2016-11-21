@@ -24,6 +24,10 @@ Message.prototype.toSerialized = function() {
 	]);
 }
 
+/**
+ * Generate an encrypted binary data.
+ * @param Buffer/String key A key used to sign. Buffer or hex-encoded string.
+ */
 Message.prototype.toEncrypted = function(key) {
 	return util.arc4(key, this.toSerialized());
 }
@@ -70,6 +74,7 @@ Message.prototype.toString = function() {
  * Returns a new Message instance from a given serialized and decoded buffer object.
  */
 Message.fromSerialized = function(ser) {
+	if(typeof ser == 'string') ser = Buffer.from(ser, 'hex');
 	var prefix = null;
 	if(ser.length >= 8 && ser.slice(0, 8).toString() == 'CNTRPRTY') {
 		prefix = 'CNTRPRTY';
@@ -85,8 +90,8 @@ Message.fromSerialized = function(ser) {
 }
 
 /**
- * @param Buffer key The key to decode given data (the txid of first input of a transaction).
- * @param Buffer data The data chunk embedded in a transaction.
+ * @param Buffer/String key The key to decode given data (the txid of first input of a transaction).
+ * @param Buffer/String data The data chunk embedded in a transaction.
  */
 Message.fromEncrypted = function(key, data) {
 	return Message.fromSerialized(util.arc4(key, data));
@@ -125,7 +130,11 @@ Message.createExecute = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createIssuance = function(asset_id, quantity, divisible, callable, call_date, call_price, description) {
+Message.createIssuance = function(asset, quantity, divisible, callable, call_date, call_price, description) {
+	// Accept flexible params.
+	var asset_id = util.toAssetId(asset);
+	quantity = Long.fromValue(quantity);
+	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
 	var buf_quantity = Buffer.from(quantity.toBytesBE());
 	var buf_divisible = Buffer.from([divisible ? 1 : 0]);
@@ -151,6 +160,13 @@ Message.createIssuance = function(asset_id, quantity, divisible, callable, call_
 };
 
 Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required) {
+	// Accept flexible params.
+	give_id = util.toAssetId(give_id);
+	give_quantity = Long.fromValue(give_quantity);
+	get_id = util.toAssetId(get_id);
+	get_quantity = Long.fromValue(get_quantity);
+	fee_required = Long.fromValue(fee_required);
+	// Create input buffers.
 	var buf_give_id = Buffer.from(give_id.toBytesBE());
 	var buf_give_quantity = Buffer.from(give_quantity.toBytesBE());
 	var buf_get_id = Buffer.from(get_id.toBytesBE());
@@ -176,7 +192,11 @@ Message.createPublish = function() {
 //Message.createRPS = function() {};
 //Message.createRPSResolve = function() {};
 
-Message.createSend = function(asset_id, quantity) {
+Message.createSend = function(asset, quantity) {
+	// Accept flexible params.
+	var asset_id = util.toAssetId(asset);
+	quantity = Long.fromValue(quantity);
+	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
 	var buf_quantity = Buffer.from(quantity.toBytesBE());
 	return new Message(util.PREFIX, 0, Buffer.concat([

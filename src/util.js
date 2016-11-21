@@ -25,6 +25,8 @@ util.getBitcoinJSNetwork = function(str) {
  * Encrypt/Decrypt given data using (A)RC4.
  */
 util.arc4 = function(key, data) {
+	if(typeof key == 'string') key = Buffer.from(key, 'hex');
+	if(typeof data == 'string') data = Buffer.from(data, 'hex');
 	var S = [];
 	for(var i=0; i<256; i++) {
 		S[i] = i;
@@ -133,6 +135,24 @@ util.assetNameToId = function(asset_name) {
 	}
 	return asset_id
 };
+
+/**
+ * Convert given data to asset ID.
+ */
+util.toAssetId = function(asset) {
+	if(asset instanceof Long) return Long.fromValue(asset);
+	if(typeof asset == 'number') {
+		return Long.fromInteger(asset, true);
+	}
+	if(typeof asset == 'string') {
+		// If start from A.
+		if(asset[0] == 'A') {
+			return Long.fromString(asset.substr(1), true);
+		}
+		return util.assetNameToId(asset);
+	}
+	throw new Error('Invalid asset type');
+}
 
 /**
  * Build a new Counterparty transaction.
