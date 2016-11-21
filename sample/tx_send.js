@@ -60,15 +60,12 @@ request.get(BLOCKEXPLORER_ADDRESS[network].replace(':ADDRESS:', fromAddr), funct
 		inAmount += utxo.value;
 	}
 	if(inAmount < MIN_REQUIRED) throw new Error('Insufficient funds');
-	var destinations = [{
-		address: toAddr,
-	}];
-	var messages = [xcp.Message.createSend(asset, amount)];
+	var message = xcp.Message.createSend(asset, amount);
 	var change = {
 		address: fromAddr,
 		value: inAmount - MIN_REQUIRED - FEE_TO_PAY,
 	};
-	var rawtx = xcp.util.buildTransaction(inputs, destinations, messages, change, network);
+	var rawtx = xcp.util.buildTransaction(inputs, toAddr, message, change, network);
 	console.log('Unsigned tx: ' + rawtx.toString('hex'));
 	// Sign transaction.
 	var tx = bitcoin.Transaction.fromBuffer(rawtx);
