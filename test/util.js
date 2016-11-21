@@ -1,6 +1,7 @@
 
 var Long = require('long');
 var util = require('../src/util.js');
+var Message = require('../src/Message.js');
 
 var assert = require('assert');
 
@@ -27,6 +28,22 @@ describe('util', function() {
 	});
 	it('should recover asset ID from alphabetic asset name', function() {
 		assert(util.assetNameToId('VISVIRIAL').equals(Long.fromString('0000040d5cba2a73', true, 16)));
+	});
+	it('should build a transaction', function() {
+		var inputs = [{
+			txid: '990e1388e6f16008fc33b6d945bcf9981c87d1d339ef9c685fb9305309b946a8',
+			vout: 1,
+		}];
+		var destinations = [{
+			address: 'msTBjkycK1ZmPq1EBkQUwvSYq2fm5KrpJJ',
+		}];
+		var messages = [Message.createSend(util.assetNameToId('VISVIRIAL'), Long.fromString('100000000', true))];
+		var change = {
+			address: 'mtGffL93zFs3gdhcFo5DGkCQxSJFfdttYa',
+			value: 99925290,
+		};
+		var rawtx = util.buildTransaction(inputs, destinations, messages, change, 'testnet');
+		assert.deepEqual(rawtx, Buffer.from('0100000001a846b9095330b95f689cef39d3d1871c98f9bc45d9b633fc0860f1e688130e990100000000ffffffff0336150000000000001976a91482eb113f0455107b1788093844f3027595b0b44888ac00000000000000001e6a1c6ad7042493a8749786f99d122f7aaa23dd5ac4d90d98acad76d9a7a92abdf405000000001976a9148be5ed53f1529e493b4c06f945f805b31afb400388ac00000000', 'hex'));
 	});
 });
 

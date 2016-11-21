@@ -9,6 +9,18 @@ util.PREFIX = 'CNTRPRTY';
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 util.MNEMONIC_WORDS = require('./mnemonic_words.json');
 
+util.getBitcoinJSNetwork = function(str) {
+	str = str || 'mainnet';
+	switch(str) {
+		case 'mainnet':
+			return bitcoin.networks.bitcoin;
+		case 'testnet':
+			return bitcoin.networks.testnet;
+		default:
+			throw new Error('Invalid network name specified');
+	}
+}
+
 /**
  * Encrypt/Decrypt given data using (A)RC4.
  */
@@ -121,6 +133,38 @@ util.assetNameToId = function(asset_name) {
 	}
 	return asset_id
 };
+
+/**
+ * Build a new Counterparty transaction.
+ * @param Array inputs Each item should contain "String txid" and "Integer vout".
+ * @param Array destinations Destination outputs. Item should contain "String address" and optionally "Integer value (default=5430)".
+ * @param Message[] message The message object.
+ * @param String change_addr Excess bitcoins are paid to this address.
+ * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
+ */
+util.buildTransaction = function(inputs, destinations, messages, change, network) {
+	var tx = new bitcoin.Transaction();
+	// Add inputs.
+	for(var input of inputs) {
+		var hash = Buffer.from(input.txid.match(/.{2}/g).reverse().join(''), 'hex');
+		tx.addInput(hash, input.vout);
+	}
+	// Add destination outputs.
+	for(var dest of destinations) {
+		if(typeof dest.value == 'undefined') {
+			dest.value = 5430;
+		}
+		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
+	}
+	// Add messages.
+	for(var msg of messages) {
+		var data = msg.toEncrypted(Buffer.from(inputs[0].txid, 'hex'));
+		tx.addOutput(bitcoin.script.nullDataOutput(data), 0);
+	}
+	// Add change.
+	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
+	return tx.toBuffer();
+}
 
 module.exports = util;
 
