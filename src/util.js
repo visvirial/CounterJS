@@ -159,7 +159,7 @@ util.toAssetId = function(asset) {
  * @param Array inputs Each item should contain "String txid" and "Integer vout".
  * @param Array destinations Destination outputs. Item should contain "String address" and optionally "Integer value (default=5430)".
  * @param Message[] message The message object.
- * @param String change_addr Excess bitcoins are paid to this address.
+ * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: FEE_TO_PAY}.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
 util.buildTransaction = function(inputs, destinations, messages, change, network) {
