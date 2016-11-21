@@ -5,8 +5,8 @@ var bitcoin = require('bitcoinjs-lib');
 var xcp = require('../');
 
 const BLOCKEXPLORER_ADDRESS = {
-	mainnet: 'https://api.blockcypher.com/v1/btc/main/addrs/:ADDRESS:',
-	testnet: 'https://api.blockcypher.com/v1/btc/test3/addrs/:ADDRESS:',
+	mainnet: 'https://api.blockcypher.com/v1/btc/main/addrs/:ADDRESS:?unspentOnly=true',
+	testnet: 'https://api.blockcypher.com/v1/btc/test3/addrs/:ADDRESS:?unspentOnly=true',
 };
 const BLOCKEXPLORER_BROADCAST = {
 	mainnet: 'https://api.blockcypher.com/v1/btc/main/txs/push',
@@ -35,8 +35,9 @@ request.get(BLOCKEXPLORER_ADDRESS[network].replace(':ADDRESS:', fromAddr), funct
 	var json = JSON.parse(body);
 	// Correct utxos.
 	var utxos = [];
-	for(var tx of json.txrefs.concat(json.unconfirmed_txrefs)) {
-		if(tx.spent) continue;
+	var txrefs = json.txrefs;
+	if(json.unconfirmed_txrefs) txrefs.concat(json.unconfirmed_txrefs);
+	for(var tx of txrefs) {
 		if(tx.tx_output_n < 0) continue;
 		utxos.push({
 			txid: tx.tx_hash,
