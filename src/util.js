@@ -1,5 +1,4 @@
 
-var crypto = require('crypto');
 var Long = require('long');
 var bitcoin = require('bitcoinjs-lib');
 
