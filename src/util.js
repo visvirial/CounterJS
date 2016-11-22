@@ -7,6 +7,7 @@ var util = {};
 
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 util.MNEMONIC_WORDS = require('./mnemonic_words.json');
+util.MAX_OP_RETURN = 80;
 
 util.getBitcoinJSNetwork = function(str) {
 	str = str || 'mainnet';
@@ -184,7 +185,10 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
 	}
 	// Add message.
-	tx.addOutput(bitcoin.script.nullDataOutput(message.toEncrypted(inputs[0].txid)), 0);
+	var encrypted = message.toEncrypted(inputs[0].txid);
+	for(var bytesWrote=0; bytesWrote<encrypted.length; bytesWrote+=util.MAX_OP_RETURN) {
+		tx.addOutput(bitcoin.script.nullDataOutput(encrypted.slice(bytesWrote, bytesWrote+util.MAX_OP_RETURN)), 0);
+	}
 	// Add change.
 	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
 	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
