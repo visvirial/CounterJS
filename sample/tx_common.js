@@ -16,19 +16,23 @@ common.BLOCKEXPLORER_BROADCAST = {
 };
 common.FEE_TO_PAY = 20000;
 
-common.fetchUnspentOutputs = function(addr, cb) {
+common.getNetworkFromAddress = function(addr) {
 	switch(bitcoin.address.fromBase58Check(addr).version) {
 		case bitcoin.networks.bitcoin.pubKeyHash:
 		case bitcoin.networks.bitcoin.scriptHash:
-			network = 'mainnet';
-			break;
+			return 'mainnet';
 		case bitcoin.networks.testnet.pubKeyHash:
 		case bitcoin.networks.testnet.scriptHash:
-			network = 'testnet';
-			break;
-		default:
-			cb(new Error('Invalid address version'));
-			return;
+			return 'testnet';
+	}
+	return null;
+};
+
+common.fetchUnspentOutputs = function(addr, cb) {
+	var network = common.getNetworkFromAdress(addr);
+	if(!network) {
+		cb(new Error('Invalid address version'));
+		return;
 	}
 	request.get(common.BLOCKEXPLORER_ADDRESS[network].replace(':ADDRESS:', addr), function(err, res, body) {
 		if(err) {
@@ -64,7 +68,7 @@ common.signTransaction = function(rawtx, privkey) {
 		builder.sign(vin, privkey);
 	}
 	return builder.build().toHex();
-}
+};
 
 common.broadcast = function(tx, network, cb) {
 	var options = {

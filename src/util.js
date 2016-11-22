@@ -18,7 +18,7 @@ util.getBitcoinJSNetwork = function(str) {
 		default:
 			throw new Error('Invalid network name specified');
 	}
-}
+};
 
 /**
  * Encrypt/Decrypt given data using (A)RC4.
@@ -27,10 +27,10 @@ util.arc4 = function(key, data) {
 	if(typeof key == 'string') key = Buffer.from(key, 'hex');
 	if(typeof data == 'string') data = Buffer.from(data, 'hex');
 	var S = [];
-	for(var i=0; i<256; i++) {
+	for(let i=0; i<256; i++) {
 		S[i] = i;
 	}
-	for(var i=0,j=0; i<256; i++) {
+	for(let i=0,j=0; i<256; i++) {
 		j = (j + S[i] + key[i % key.length]) % 256;
 		[S[i], S[j]] = [S[j], S[i]];
 	}
@@ -43,7 +43,7 @@ util.arc4 = function(key, data) {
 		ret.push(data[x] ^ K);
 	}
 	return Buffer.from(ret);
-}
+};
 
 /**
  * Recover a WIF from a given passphrase.
@@ -51,18 +51,21 @@ util.arc4 = function(key, data) {
  * @return String WIF format private key.
  */
 util.mnemonicToPrivateKey = function(passphrase, index, network) {
-	if(passphrase.length == 2) {
-		throw new Error('Password is not implemented yet');
-	} else {
-		var mnemonic = passphrase;
-	}
+	var getMnemonic = function(data) {
+		if(data.length == 2) {
+			throw new Error('Password is not implemented yet');
+		} else {
+			return data;
+		}
+	};
+	var mnemonic = getMnemonic(passphrase);
 	if(typeof mnemonic == 'string') {
 		mnemonic = mnemonic.split(' ');
 	}
 	if(typeof mnemonic != 'object') {
 		throw new Error('Gieven mnemonic is an invalid type: ' + (typeof mnemonic));
 	}
-	if(mnemonic.length%3 != 0) {
+	if(mnemonic.length%3 !== 0) {
 		throw new Error('The length of mnemonic array should be divisible by 3');
 	}
 	var seed = Buffer.alloc(4*mnemonic.length/3);
@@ -81,7 +84,7 @@ util.mnemonicToPrivateKey = function(passphrase, index, network) {
 	}
 	var master = bitcoin.HDNode.fromSeedBuffer(seed, util.getBitcoinJSNetwork(network));
 	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
-}
+};
 
 util.assetIdToName = function(asset_id) {
 	if(asset_id.equals(0)) return 'BTC';
@@ -114,7 +117,7 @@ util.assetNameToId = function(asset_name) {
 		if(!asset_name.match(/^A[0-9]+$/)) {
 			throw new Error('Non-numeric asset name should not start with "A"');
 		}
-		var asset_id = Long.fromString(asset_name.substr(1), true);
+		let asset_id = Long.fromString(asset_name.substr(1), true);
 		if(!asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176', true))) {
 			throw new Error('Asset ID is too small');
 		}
@@ -133,7 +136,7 @@ util.assetNameToId = function(asset_name) {
 	if(asset_id.lessThan(26 * 26 * 26)) {
 		throw new Error('Asset ID is too low');
 	}
-	return asset_id
+	return asset_id;
 };
 
 /**
@@ -152,7 +155,7 @@ util.toAssetId = function(asset) {
 		return util.assetNameToId(asset);
 	}
 	throw new Error('Invalid asset type');
-}
+};
 
 /**
  * Build a new Counterparty transaction.
@@ -186,7 +189,7 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
 	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
 	return tx.toBuffer();
-}
+};
 
 module.exports = util;
 

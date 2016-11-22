@@ -1,7 +1,7 @@
 'use strict';
 
-var Long = require('long');
-var util = require('./util');
+const Long = require('long');
+const util = require('./util');
 
 /**
  * Create a new Message instance.
@@ -23,7 +23,7 @@ Message.prototype.toSerialized = function() {
 		bufid,
 		this.data
 	]);
-}
+};
 
 /**
  * Generate an encrypted binary data.
@@ -31,7 +31,7 @@ Message.prototype.toSerialized = function() {
  */
 Message.prototype.toEncrypted = function(key) {
 	return util.arc4(key, this.toSerialized());
-}
+};
 
 Message.prototype.parse = function() {
 	var type;
@@ -65,11 +65,11 @@ Message.prototype.toJSON = function() {
 		type: parse.type,
 		data: parse.data,
 	};
-}
+};
 
 Message.prototype.toString = function() {
 	return JSON.stringify(this.toJSON(), null, '\t');
-}
+};
 
 /**
  * Returns a new Message instance from a given serialized and decoded buffer object.
@@ -88,7 +88,7 @@ Message.fromSerialized = function(ser) {
 	var id = ser.readUInt32BE(prefix.length);
 	var data = ser.slice(prefix.length+4);
 	return new Message(id, data, prefix);
-}
+};
 
 /**
  * @param Buffer/String key The key to decode given data (the txid of first input of a transaction).
@@ -96,7 +96,7 @@ Message.fromSerialized = function(ser) {
  */
 Message.fromEncrypted = function(key, data) {
 	return Message.fromSerialized(util.arc4(key, data));
-}
+};
 
 
 
