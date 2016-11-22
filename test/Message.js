@@ -17,7 +17,7 @@ describe('Message', function() {
 	});
 	it('should create Issuance message correctly', function() {
 		assert.equal(
-			Message.createIssuance('VISVIRIAL', 100000000000, true, false, 0, 0, '@visvirial').data.toString('hex'),
+			Message.createIssuance('VISVIRIAL', 100000000000, true, '@visvirial').data.toString('hex'),
 			'0000040d5cba2a73000000174876e800010000000000000000000a4076697376697269616c');
 	});
 	it('should create Order message correctly', function() {

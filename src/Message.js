@@ -131,7 +131,7 @@ Message.createExecute = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createIssuance = function(asset, quantity, divisible, callable, call_date, call_price, description) {
+Message.createIssuance = function(asset, quantity, divisible, description, callable=false, call_date=0, call_price=0.0) {
 	// Accept flexible params.
 	var asset_id = util.toAssetId(asset);
 	quantity = Long.fromValue(quantity);
