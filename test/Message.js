@@ -22,7 +22,7 @@ describe('Message', function() {
 	});
 	it('should create Order message correctly', function() {
 		assert.equal(
-			Message.createOrder('VISVIRIAL', 1000000000, 'XCP', '123000000000', 1000, 0).data.toString('hex'),
+			Message.createOrder('VISVIRIAL', 1000000000, 'XCP', '123000000000', 1000).data.toString('hex'),
 			'0000040d5cba2a73000000003b9aca0000000000000000010000001ca35f0e0003e80000000000000000');
 	});
 	it('should create Send message correctly', function() {

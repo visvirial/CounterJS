@@ -160,7 +160,7 @@ Message.createIssuance = function(asset, quantity, divisible, description, calla
 	]));
 };
 
-Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required) {
+Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required=0) {
 	// Accept flexible params.
 	give_id = util.toAssetId(give_id);
 	give_quantity = Long.fromValue(give_quantity);
