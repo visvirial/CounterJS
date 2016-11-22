@@ -147,8 +147,19 @@ Message.createDestroy = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createDividend = function() {
-	throw new Error('Not implemented');
+Message.createDividend = function(quantity_per_unit, asset, dividend_asset) {
+	quantity_per_unit = Long.fromValue(quantity_per_unit);
+	var asset_id = util.toAssetId(asset);
+	var dividend_asset_id = util.toAssetId(dividend_asset);
+	// Create input buffers.
+	var buf_quantity_per_unit = Buffer.from(quantity_per_unit.toBytesBE());
+	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
+	var buf_dividend_asset_id = Buffer.from(dividend_asset_id.toBytesBE());
+	return new Message(50, Buffer.concat([
+		buf_quantity_per_unit,
+		buf_asset_id,
+		buf_dividend_asset_id,
+	]));
 };
 
 Message.createExecute = function() {
