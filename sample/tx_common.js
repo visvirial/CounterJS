@@ -29,7 +29,7 @@ common.getNetworkFromAddress = function(addr) {
 };
 
 common.fetchUnspentOutputs = function(addr, cb) {
-	var network = common.getNetworkFromAdress(addr);
+	var network = common.getNetworkFromAddress(addr);
 	if(!network) {
 		cb(new Error('Invalid address version'));
 		return;

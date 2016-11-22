@@ -17,6 +17,6 @@ var divisible = {true: true, false: false}[process.argv[idx++]];
 if(typeof divisible == 'undefined') throw new Error('Invalid DIVISIBLE');
 var desc = process.argv[idx++];
 
-var message = xcp.Message.createIssuance(asset, quantity, divisible, false, 0, 0.0, desc);
+var message = xcp.Message.createIssuance(asset, quantity, divisible, desc);
 common.sendTransaction(fromWIF, null, message);
 
