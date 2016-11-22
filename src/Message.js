@@ -100,12 +100,36 @@ Message.fromEncrypted = function(key, data) {
 
 
 
+Message.stringToBuffer = function(str, thresholdLen) {
+	var buf = Buffer.from(str);
+	// "Pascal-style" serialization (the first byte is the length of a string)
+	if(str.length <= thresholdLen) {
+		buf = Buffer.concat([Buffer.from([str.length]), buf]);
+	}
+	return buf;
+}
+
 Message.createBet = function(bet_type, deadline, wager_quantity, counterwager_quantity, target_value, leverage, expiration) {
 	throw new Error('Not implemented');
 };
 
-Message.createBroadcast = function() {
-	throw new Error('Not implemented');
+Message.createBroadcast = function(text, value=-1, fee_fraction=0, timestamp) {
+	if(!Number.isInteger(fee_fraction)) fee_fraction=Math.round(1e8*fee_fraction);
+	timestamp = timestamp || Math.floor(new Date().getTime()/1000);
+	// Create input buffers.
+	var buf_timestamp = Buffer.alloc(4);
+	buf_timestamp.writeUInt32BE(timestamp);
+	var buf_value = Buffer.alloc(8);
+	buf_value.writeDoubleBE(value);
+	var buf_fee_fraction = Buffer.alloc(4);
+	buf_fee_fraction.writeUInt32BE(fee_fraction);
+	var buf_text = Message.stringToBuffer(text, 52);
+	return new Message(30, Buffer.concat([
+		buf_timestamp,
+		buf_value,
+		buf_fee_fraction,
+		buf_text,
+	]));
 };
 
 Message.createBTCPay = function() {
@@ -144,11 +168,7 @@ Message.createIssuance = function(asset, quantity, divisible, description, calla
 	buf_call_date.writeUInt32BE(call_date || 0);
 	var buf_call_price = Buffer.alloc(4);
 	buf_call_price.writeFloatBE(call_price);
-	var buf_description = Buffer.from(description);
-	// "Pascal-style" serialization (the first byte is the length of a string)
-	if(description.length <= 42) {
-		buf_description = Buffer.concat([Buffer.from([description.length]), buf_description]);
-	}
+	var buf_description = Message.stringToBuffer(description, 42);
 	return new Message(20, Buffer.concat([
 		buf_asset_id,
 		buf_quantity,
