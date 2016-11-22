@@ -1,3 +1,4 @@
+'use strict';
 
 var Long = require('long');
 var bitcoin = require('bitcoinjs-lib');

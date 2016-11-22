@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 
 var bitcoin = require('bitcoinjs-lib');
 var xcp = require('../');

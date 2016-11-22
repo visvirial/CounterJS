@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 
 var xcp = require('../');
 var common = require('./tx_common');
