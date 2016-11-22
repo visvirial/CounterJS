@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Counterparty JavaScript/Node.js library.",
   "author": "Vis Virial <visvirial@gmail.com>",
+  "license": "MIT",
   "keywords": [
     "cryptocurrency",
     "bitcoin",
@@ -17,6 +18,10 @@
     "long": "^3.2.0"
   },
   "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jshint": "^2.0.4",
+    "jshint": "^2.9.4",
+    "jshint-stylish": "^2.2.1",
     "mocha": "^3.1.2"
   },
   "jshintConfig": {
