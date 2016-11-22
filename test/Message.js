@@ -20,6 +20,11 @@ describe('Message', function() {
 			Message.createBroadcast('Hi, this is @visvirial!', 1234, 0.004321, Math.floor(new Date(2016, 10, 22, 12).getTime()/1000)).data.toString('hex'),
 			'5833b4b04093480000000000000697e41748692c2074686973206973204076697376697269616c21');
 	});
+	it('should create Cancel message correctly', function() {
+		assert.equal(
+			Message.createCancel('cbe3e81d39617f035835e96d03c1c5673a97c45bce95809ccea79e18581a75fc').data.toString('hex'),
+			'cbe3e81d39617f035835e96d03c1c5673a97c45bce95809ccea79e18581a75fc');
+	});
 	it('should create Dividend message correctly', function() {
 		assert.equal(
 			Message.createDividend(10000000, 'PEPE', 'POKEMON').data.toString('hex'),

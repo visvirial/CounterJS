@@ -139,8 +139,12 @@ Message.createBTCPay = function() {
 /* "Burn" message is just a normal bitcoin transfer transaction. We do not implement here. */
 //Message.createBurn = function() {};
 
-Message.createCancel = function() {
-	throw new Error('Not implemented');
+Message.createCancel = function(txid) {
+	var buf = null;
+	if(typeof txid == 'string') buf=Buffer.from(txid, 'hex');
+	if(txid instanceof Buffer) buf=Buffer.from(txid);
+	if(!buf) throw new Error('Invalid data type');
+	return new Message(70, buf);
 };
 
 Message.createDestroy = function() {
