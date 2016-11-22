@@ -107,13 +107,13 @@ Message.stringToBuffer = function(str, thresholdLen) {
 		buf = Buffer.concat([Buffer.from([str.length]), buf]);
 	}
 	return buf;
-}
+};
 
 Message.createBet = function(bet_type, deadline, wager_quantity, counterwager_quantity, target_value, leverage, expiration) {
 	throw new Error('Not implemented');
 };
 
-Message.createBroadcast = function(text, value=-1, fee_fraction=0, timestamp) {
+Message.createBroadcast = function(text, value=-1, fee_fraction=0, timestamp=undefined) {
 	if(!Number.isInteger(fee_fraction)) fee_fraction=Math.round(1e8*fee_fraction);
 	timestamp = timestamp || Math.floor(new Date().getTime()/1000);
 	// Create input buffers.

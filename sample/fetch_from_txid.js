@@ -28,11 +28,11 @@ request(EXPLORER_TX.replace(':TXID:', txid), function(err, req, body) {
 				sources.push(input.addresses[0]);
 			}
 		}
-		for(var i=1; i<sources.length; i++) {
+		for(let i=1; i<sources.length; i++) {
 			if(sources[i] != sources[0]) return null;
 		}
 		return sources[0];
-	}
+	};
 	var source = getSource(json.inputs);
 	// Parse output.
 	var destination = null;
@@ -40,7 +40,7 @@ request(EXPLORER_TX.replace(':TXID:', txid), function(err, req, body) {
 	for(var i in json.outputs) {
 		var out = json.outputs[i];
 		if(out.script_type == 'pay-to-pubkey-hash') {
-			if(!destination && encrypted.length==0) {
+			if(!destination && encrypted.length===0) {
 				destination = {
 					address: out.addresses[i],
 					amount: out.value,
