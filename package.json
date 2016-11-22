@@ -18,5 +18,9 @@
   },
   "devDependencies": {
     "mocha": "^3.1.2"
+  },
+  "jshintConfig": {
+    "esversion": 6,
+    "node": true
   }
 }
