@@ -18,17 +18,51 @@ request(EXPLORER_TX.replace(':TXID:', txid), function(err, req, body) {
 	if(err) throw new Error('Failed to access to the blockexplorer: ' + err.toString());
 	var json = JSON.parse(body);
 	if(json.error) throw new Error('Failed to fetch transaction data: ' + json.error);
+	// Parse input.
 	var key = Buffer.from(json.inputs[0].prev_hash, 'hex');
-	for(var i in json.outputs) {
-		var out = json.outputs[i];
-		if(out.script_type == 'null-data') {
-			try {
-				json.outputs[i].message = xcp.Message.fromEncrypted(key, Buffer.from(out.data_hex, 'hex')).toJSON();
-			} catch(e) {
-				// Maybe a non-counterparty transaction...
+	var getSource = function(inputs) {
+		var sources = [];
+		for(var i in inputs) {
+			var input = inputs[i];
+			if(input.script_type == 'pay-to-pubkey-hash') {
+				sources.push(input.addresses[0]);
 			}
 		}
+		for(var i=1; i<sources.length; i++) {
+			if(sources[i] != sources[0]) return null;
+		}
+		return sources[0];
 	}
-	console.log(JSON.stringify(json, null, '  '));
+	var source = getSource(json.inputs);
+	// Parse output.
+	var destination = null;
+	var encrypted = Buffer.alloc(0);
+	for(var i in json.outputs) {
+		var out = json.outputs[i];
+		if(out.script_type == 'pay-to-pubkey-hash') {
+			if(!destination && encrypted.length==0) {
+				destination = {
+					address: out.addresses[i],
+					amount: out.value,
+				};
+			}
+		}
+		if(out.script_type == 'null-data') {
+			encrypted = Buffer.concat([encrypted, Buffer.from(out.data_hex, 'hex')]);
+		}
+	}
+	// Print result.
+	console.log('Source address: '+(source?source:'N/A'));
+	if(destination) {
+		console.log('Destination address/amount: '+destination.address+' / '+(1e-5*destination.amount).toFixed(5)+' mBTC');
+	} else {
+		console.log('Destination address/amount: N/A');
+	}
+	console.log('Embedded data:');
+	try {
+		console.log(xcp.Message.fromEncrypted(key, encrypted).toJSON());
+	} catch(e) {
+		console.log('Non-counterparty or invalid data.');
+	}
 });
 
