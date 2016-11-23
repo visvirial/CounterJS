@@ -28,10 +28,10 @@ util.arc4 = function(key, data) {
 	if(typeof key == 'string') key = Buffer.from(key, 'hex');
 	if(typeof data == 'string') data = Buffer.from(data, 'hex');
 	var S = [];
-	for(let i=0; i<256; i++) {
+	for(var i=0; i<256; i++) {
 		S[i] = i;
 	}
-	for(let i=0,j=0; i<256; i++) {
+	for(var i=0,j=0; i<256; i++) {
 		j = (j + S[i] + key[i % key.length]) % 256;
 		[S[i], S[j]] = [S[j], S[i]];
 	}
@@ -118,7 +118,7 @@ util.assetNameToId = function(asset_name) {
 		if(!asset_name.match(/^A[0-9]+$/)) {
 			throw new Error('Non-numeric asset name should not start with "A"');
 		}
-		let asset_id = Long.fromString(asset_name.substr(1), true);
+		var asset_id = Long.fromString(asset_name.substr(1), true);
 		if(!asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176', true))) {
 			throw new Error('Asset ID is too small');
 		}
