@@ -17,7 +17,7 @@ describe('Message', function() {
 	});
 	it('should create Broadsact message correctly', function() {
 		assert.equal(
-			Message.createBroadcast('Hi, this is @visvirial!', 1234, 0.004321, Math.floor(new Date(2016, 10, 22, 12).getTime()/1000)).data.toString('hex'),
+			Message.createBroadcast('Hi, this is @visvirial!', 1234, 432100, Math.floor(new Date(2016, 10, 22, 12).getTime()/1000)).data.toString('hex'),
 			'5833b4b04093480000000000000697e41748692c2074686973206973204076697376697269616c21');
 	});
 	it('should create Cancel message correctly', function() {

@@ -113,8 +113,9 @@ Message.createBet = function(bet_type, deadline, wager_quantity, counterwager_qu
 	throw new Error('Not implemented');
 };
 
-Message.createBroadcast = function(text, value=-1, fee_fraction=0, timestamp=undefined) {
-	if(!Number.isInteger(fee_fraction)) fee_fraction=Math.round(1e8*fee_fraction);
+Message.createBroadcast = function(text, value, fee_fraction, timestamp) {
+	value = value || -1;
+	fee_fraction = fee_fraction || 0;
 	timestamp = timestamp || Math.floor(new Date().getTime()/1000);
 	// Create input buffers.
 	var buf_timestamp = Buffer.alloc(4);
@@ -170,7 +171,10 @@ Message.createExecute = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createIssuance = function(asset, quantity, divisible, description, callable=false, call_date=0, call_price=0.0) {
+Message.createIssuance = function(asset, quantity, divisible, description, callable, call_date, call_price) {
+	callable = callable || false;
+	call_date = call_date || 0;
+	call_price = call_price || 0.0;
 	// Accept flexible params.
 	var asset_id = util.toAssetId(asset);
 	quantity = Long.fromValue(quantity);
@@ -195,7 +199,8 @@ Message.createIssuance = function(asset, quantity, divisible, description, calla
 	]));
 };
 
-Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required=0) {
+Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required) {
+	fee_required = fee_required || 0;
 	// Accept flexible params.
 	give_id = util.toAssetId(give_id);
 	give_quantity = Long.fromValue(give_quantity);
