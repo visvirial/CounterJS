@@ -18,11 +18,18 @@
     "long": "^3.2.0"
   },
   "devDependencies": {
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.1",
+    "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-jshint": "^2.0.4",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^2.0.0",
     "jshint": "^2.9.4",
     "jshint-stylish": "^2.2.1",
-    "mocha": "^3.1.2"
+    "mocha": "^3.1.2",
+    "pump": "^1.0.1",
+    "vinyl-source-stream": "^1.1.0"
   },
   "jshintConfig": {
     "esversion": 6,
