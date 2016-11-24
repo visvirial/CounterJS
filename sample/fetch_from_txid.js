@@ -41,11 +41,12 @@ request(EXPLORER_TX[network].replace(':TXID:', txid), function(err, req, body) {
 	var source = getSource(json.inputs);
 	// Parse output.
 	var destination = null;
-	var encrypted = Buffer.alloc(0);
+	var rawdata = Buffer.alloc(0);
+	var type = null;
 	for(var i in json.outputs) {
 		var out = json.outputs[i];
 		if(out.script_type == 'pay-to-pubkey-hash') {
-			if(!destination && encrypted.length===0) {
+			if(!destination && rawdata.length===0) {
 				destination = {
 					address: out.addresses[i],
 					amount: out.value,
@@ -53,7 +54,14 @@ request(EXPLORER_TX[network].replace(':TXID:', txid), function(err, req, body) {
 			}
 		}
 		if(out.script_type == 'null-data') {
-			encrypted = Buffer.concat([encrypted, Buffer.from(out.data_hex, 'hex')]);
+			type = 'OP_RETURN';
+			rawdata = xcp.util.arc4(key, out.data_hex);
+		}
+		if(out.script_type == 'pay-to-multi-pubkey-hash') {
+			type = 'multisig';
+			var buf = Buffer.from(out.script, 'hex');
+			var decrypted = xcp.util.arc4(key, Buffer.concat([buf.slice(3, 33), buf.slice(36, 68)]));
+			rawdata = Buffer.concat([rawdata, decrypted.slice(1, 1+decrypted[0])]);
 		}
 	}
 	// Print result.
@@ -65,7 +73,7 @@ request(EXPLORER_TX[network].replace(':TXID:', txid), function(err, req, body) {
 	}
 	console.log('Embedded data:');
 	try {
-		console.log(xcp.Message.fromEncrypted(key, encrypted).toJSON());
+		console.log(xcp.Message.fromSerialized(rawdata).toJSON());
 	} catch(e) {
 		console.log('Non-counterparty or invalid data: ' + e.toString());
 	}
