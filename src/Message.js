@@ -33,25 +33,185 @@ Message.prototype.toEncrypted = function(key) {
 	return util.arc4(key, this.toSerialized());
 };
 
-Message.prototype.parse = function() {
-	var type;
-	var data = {};
-	switch(this.id) {
-		case 0:
-			type = 'Send';
-			if(this.data.length != 16) {
-				data.error = 'Invalid data length';
-				break;
+Message.TYPES = {
+	30: {
+		type: 'Broadcast',
+		structure: [
+			{
+				label: 'timestamp',
+				type: 'UInt32BE',
+			},
+			{
+				label: 'value',
+				type: 'DoubleBE',
+			},
+			{
+				label: 'fee_fraction',
+				type: 'UInt32BE',
+			},
+			{
+				label: 'text',
+				type: 'String',
+				thresholdLen: 52,
+			},
+		],
+	},
+	70: {
+		type: 'Cancel',
+		structure: [
+			{
+				label: 'txid',
+				type: 'Hex',
+				length: 32,
 			}
-			data.asset_id = new Long(this.data.readUInt32BE(4), this.data.readUInt32BE(0), true);
-			data.quantity = new Long(this.data.readUInt32BE(12), this.data.readUInt32BE(8), true);
-			break;
-		default:
-			type = 'Unknown';
-			data.error = 'Unknown ID: ' + this.id;
+		],
+	},
+	50: {
+		type: 'Dividend',
+		structure: [
+			{
+				label: 'quantity_per_unit',
+				type: 'UInt64BE',
+			},
+			{
+				label: 'asset_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'dividend_asset_id',
+				type: 'AssetID',
+			},
+		],
+	},
+	20: {
+		type: 'Issuance',
+		structure: [
+			{
+				label: 'asset_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'quantity',
+				type: 'UInt64BE',
+			},
+			{
+				label: 'divisible',
+				type: 'Boolean',
+			},
+			{
+				label: 'callable',
+				type: 'Boolean',
+			},
+			{
+				label: 'call_date',
+				type: 'UInt32BE',
+			},
+			{
+				label: 'call_price',
+				type: 'FloatBE',
+			},
+			{
+				label: 'description',
+				type: 'String',
+				thresholdLen: 42,
+			},
+		],
+	},
+	10: {
+		type: 'Order',
+		structure: [
+			{
+				label: 'give_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'give_quantity',
+				type: 'UInt64BE',
+			},
+			{
+				label: 'get_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'get_quantity',
+				type: 'UInt64BE',
+			},
+			{
+				label: 'expiration',
+				type: 'UInt16BE',
+			},
+			{
+				label: 'fee_required',
+				type: 'UInt64BE',
+			},
+		],
+	},
+	0: {
+		type: 'Send',
+		structure: [
+			{
+				label: 'asset_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'quantity',
+				type: 'UInt64BE',
+			},
+		],
+	}
+};
+
+Message.prototype.parse = function() {
+	var struct = Message.TYPES[this.id];
+	if(!struct) {
+		throw new Error('Invalid message ID');
+	}
+	var data = {};
+	var offset = 0;
+	for(var item of struct.structure) {
+		switch(item.type) {
+			case 'Boolean':
+				data[item.label] = this.data[offset] ? true : false;
+				offset += 1;
+				break;
+			case 'FloatBE':
+				data[item.label] = this.data.readFloatBE(offset);
+				offset += 4;
+				break;
+			case 'DoubleBE':
+				data[item.label] = this.data.readDoubleBE(offset);
+				offset += 8;
+				break;
+			case 'UInt16BE':
+				data[item.label] = this.data.readUInt16BE(offset);
+				offset += 2;
+				break;
+			case 'UInt32BE':
+				data[item.label] = this.data.readUInt32BE(offset);
+				offset += 4;
+				break;
+			case 'UInt64BE':
+				data[item.label] = new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true);
+				offset += 8;
+				break;
+			case 'String':
+				data[item.label] = Message.bufferToString(this.data, offset, item.thresholdLen);
+				offset = this.data.length;
+				break;
+			case 'Hex':
+				data[item.label] = this.data.toString('hex', offset, offset+item.length);
+				offset += item.length;
+				break;
+			case 'AssetID':
+				data[item.label] = util.assetIdToName(new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true));
+				offset += 8;
+				break;
+			default:
+				throw new Error('Internal error: invalid item type: '+item.type)
+		}
 	}
 	return {
-		type: type,
+		type: struct.type,
 		data: data,
 	};
 };
@@ -108,6 +268,14 @@ Message.stringToBuffer = function(str, thresholdLen) {
 	}
 	return buf;
 };
+
+Message.bufferToString = function(buf, offset, thresholdLen) {
+	if(buf.length-offset <= thresholdLen) {
+		var len = buf[offset];
+		return buf.toString('utf8', offset+1, offset+len+1);
+	}
+	return buf.toString('utf8', offset);
+}
 
 Message.createBet = function(bet_type, deadline, wager_quantity, counterwager_quantity, target_value, leverage, expiration) {
 	throw new Error('Not implemented');
