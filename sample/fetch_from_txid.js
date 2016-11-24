@@ -62,7 +62,7 @@ request(EXPLORER_TX.replace(':TXID:', txid), function(err, req, body) {
 	try {
 		console.log(xcp.Message.fromEncrypted(key, encrypted).toJSON());
 	} catch(e) {
-		console.log('Non-counterparty or invalid data.');
+		console.log('Non-counterparty or invalid data: ' + e.toString());
 	}
 });
 
