@@ -2,6 +2,7 @@
 
 var Long = require('long');
 var bitcoin = require('bitcoinjs-lib');
+var bufferReverse = require('buffer-reverse');
 
 var util = {};
 
@@ -193,6 +194,73 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
 	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
 	return tx.toBuffer();
+};
+
+util.parseTransaction = function(rawtx, network) {
+	network = network || 'mainnet';
+	var tx = null
+	if(rawtx instanceof Buffer) {
+		tx = bitcoin.Transaction.fromBuffer(rawtx);
+	}
+	if(typeof rawtx == 'string') {
+		tx = bitcoin.Transaction.fromHex(rawtx);
+	}
+	if(!tx) {
+		throw new Error('Invalid data type for rawtx');
+	}
+	// Get encryption key.
+	var key = bufferReverse(tx.ins[0].hash);
+	// Parse input to determine source pubkey.
+	var source = (function(inputs) {
+		var sources = [];
+		for(var input of inputs) {
+			if(bitcoin.script.classifyInput(input.script) == 'pubkeyhash') {
+				var pubkey = bitcoin.script.decompile(input.script)[1];
+				sources.push(pubkey);
+			}
+		}
+		// All input sources should be identical.
+		for(var i=1; i<sources.length; i++) {
+			if(!sources[0].equals(sources[i])) {
+				return null;
+			}
+		}
+		return sources[0];
+	})(tx.ins);
+	// Parse output.
+	var destination = null;
+	var rawdata = Buffer.alloc(0);
+	for(var i in tx.outs) {
+		var out = tx.outs[i];
+		var type = bitcoin.script.classifyOutput(out.script);
+		if(type == 'pubkeyhash') {
+			if(!destination && rawdata.length===0) {
+				destination = {
+					address: bitcoin.address.toBase58Check(out.script.slice(3, 23), {mainnet: 0x00, testnet: 0x6f}[network]),
+					amount: out.value,
+				};
+			}
+		}
+		if(type == 'nulldata') {
+			rawdata = util.arc4(key, bitcoin.script.decompile(out.script)[1]);
+		}
+		if(type == 'multisig') {
+			var decrypted = util.arc4(key, Buffer.concat([out.script.slice(3, 33), out.script.slice(36, 68)]));
+			rawdata = Buffer.concat([rawdata, decrypted.slice(1, 1+decrypted[0])]);
+		}
+	}
+	var message;
+	try {
+		message = require('./Message').fromSerialized(rawdata);
+	} catch(e) {
+		// maybe non-Counterparty tx.
+	}
+	return {
+		key: key,
+		sourcePublicKey: source,
+		destination: destination,
+		message: message,
+	};
 };
 
 module.exports = util;
