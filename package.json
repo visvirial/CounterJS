@@ -1,4 +1,8 @@
 {
+  "_": [
+    "vim: set tabstop=2:",
+    "vim: set expandtab:"
+  ],
   "name": "counterjs",
   "version": "0.0.2",
   "description": "Counterparty Node.js/JavaScript library.",
@@ -15,7 +19,9 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha"
+    "test": "./node_modules/.bin/mocha",
+    "cover": "./node_modules/.bin/istanbul cover _mocha",
+    "coveralls": "npm run cover && ./node_modules/.bin/istanbul-coveralls"
   },
   "dependencies": {
     "bitcoinjs-lib": "^2.3.0",
