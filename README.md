@@ -1,6 +1,12 @@
 CounterJS
 =========
 
+
+
+[![Build Status](https://travis-ci.org/Fressets/CounterJS.svg?branch=master)](https://travis-ci.org/Fressets/CounterJS)
+
+
+
 A pure and easy-to-use [Counterparty](https://counterparty.io/) Node.js (JavaScript) library.
 
 
