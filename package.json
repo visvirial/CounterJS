@@ -1,7 +1,7 @@
 {
   "name": "counterjs",
-  "version": "0.0.0",
-  "description": "Counterparty JavaScript/Node.js library.",
+  "version": "0.0.1",
+  "description": "Counterparty Node.js/JavaScript library.",
   "author": "Vis Virial <visvirial@gmail.com>",
   "license": "MIT",
   "keywords": [
