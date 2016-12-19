@@ -63,7 +63,7 @@ Basic Usage
 
 We will show a code for generating private key (WIF) and address associated with a given mnemonic (passphrase) as an example.
 
-Please refer to the `/sample` directory for more advanced usage.
+Please refer to the [/sample](/sample) directory for more advanced usage.
 
 ### Node.js
 
