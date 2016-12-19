@@ -213,7 +213,8 @@ util.parseTransaction = function(rawtx, network) {
 	// Parse input to determine source pubkey.
 	var source = (function(inputs) {
 		var sources = [];
-		for(var input of inputs) {
+		for(var i in inputs) {
+			var input = inputs[i];
 			if(bitcoin.script.classifyInput(input.script) == 'pubkeyhash') {
 				var pubkey = bitcoin.script.decompile(input.script)[1];
 				sources.push(pubkey);

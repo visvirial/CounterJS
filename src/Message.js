@@ -168,7 +168,8 @@ Message.prototype.parse = function() {
 	}
 	var data = {};
 	var offset = 0;
-	for(var item of struct.structure) {
+	for(var i in struct.structure) {
+		var item = struct.structure[i];
 		switch(item.type) {
 			case 'Boolean':
 				data[item.label] = this.data[offset] ? true : false;
