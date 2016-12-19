@@ -9,7 +9,7 @@ Features
 --------
 
  * Can generate or parse Counterparty messages without interaction with a Counterparty server (`counterparty-lib` and/or `blockparty`)
- * Can generate bitcoin transactions with Counterparty messages embedded or decode them
+ * Can generate or decode bitcoin transactions with Counterparty messages embedded
  * No specific bitcoin library (e.g. Bitcore and BitcoinJS) dependency. You can use any bitcoin library you prefer
  * [WIP] Browser support
 
@@ -30,6 +30,30 @@ $ npm install counterjs
 $ git clone https://github.com/fressets/CounterJS
 $ cd CounterJS
 $ npm install
+```
+
+### For browsers
+
+In the source code directory, run
+
+```
+$ gulp browser
+```
+
+Then browserified JS file `dist/counterjs.js` and minified `dist/counterjs.min.js` will be created.
+
+Load one of the files above in your HTML.
+
+```
+<script type="text/javascript" src="__JS_DIR__/counterjs.min.js"></script>
+```
+
+Then, you can `require('counterjs')` to load the module.
+
+```
+var xcp = require('counterjs');
+
+// Do the stuff!!!
 ```
 
 
