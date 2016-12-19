@@ -9,6 +9,10 @@
     "bitcoin",
     "counterparty"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fressets/CounterJS.git"
+  },
   "main": "src/index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha"
