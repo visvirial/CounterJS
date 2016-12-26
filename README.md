@@ -4,6 +4,7 @@ CounterJS
 
 
 [![Build Status](https://travis-ci.org/Fressets/CounterJS.svg?branch=master)](https://travis-ci.org/Fressets/CounterJS)
+[![Coverage Status](https://coveralls.io/repos/github/Fressets/CounterJS/badge.svg?branch=master)](https://coveralls.io/github/Fressets/CounterJS?branch=master)
 
 
 
