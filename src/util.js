@@ -9,6 +9,7 @@ var util = {};
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 util.MNEMONIC_WORDS = require('./mnemonic_words.json');
 util.MAX_OP_RETURN = 80;
+util.DUST_VALUE = 5430;
 
 util.getBitcoinJSNetwork = function(str) {
 	str = str || 'mainnet';
@@ -161,17 +162,24 @@ util.toAssetId = function(asset) {
 
 /**
  * Build a new Counterparty transaction.
- * @param Array inputs Each item should contain "String txid" and "Integer vout".
- * @param String/Object dest Destination output. Address for string. For object, format is {address: DEST_ADDR, value: SEND_AMOUNT}. If dest.value is omitted, the dust threashold (5430 satoshis) is assumed.
+ * @param Array inputs Each item should contain "String txid" and "Integer vout". "Integer value" is also required if using change.fee_per_kb.
+ * @param String/Object dest Destination output. Address for string. For object, format is {address: DEST_ADDR, value: SEND_AMOUNT, flexible: BOOLEAN}. If dest.value is omitted, the dust threashold (5430 satoshis) is assumed. If dest.flexible is set, allow reduction in output value to accomodate fees.
  * @param Message message A message to send.
- * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: AMOUNT, fee_per_kb: FEE_PER_KB}. If fee_per_kb is specified, the fee amount will be determined from a transaction size and `value` will be ignored.
+ * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: AMOUNT, fee_per_kb: FEE_PER_KB, flexible: BOOLEAN}. If fee_per_kb is specified, the fee amount will be determined from a transaction size and `value` will be ignored.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
 util.buildTransaction = function(inputs, dest, message, change, network) {
+	if (!dest && !message) throw new Error('Empty transaction: no destination or message');
+
 	var tx = new bitcoin.Transaction();
 	// Add inputs.
+	var inValue = 0;
 	for(var i in inputs) {
 		var input = inputs[i];
+		if (!input.value && change.fee_per_kb) {
+			throw new Error('Unable to calculate fee without input value');
+		}
+		inValue += input.value;
 		var hash = Buffer.from(input.txid.match(/.{2}/g).reverse().join(''), 'hex');
 		tx.addInput(hash, input.vout);
 	}
@@ -180,20 +188,45 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 		if(typeof dest == 'string') {
 			dest = {
 				address: dest,
-				value: 5430,
+				value: util.DUST_VALUE
 			};
 		}
 		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
 	}
 	// Add message.
-	var encrypted = message.toEncrypted(inputs[0].txid);
-	for(var bytesWrote=0; bytesWrote<encrypted.length; bytesWrote+=util.MAX_OP_RETURN) {
-		tx.addOutput(bitcoin.script.nullDataOutput(encrypted.slice(bytesWrote, bytesWrote+util.MAX_OP_RETURN)), 0);
+	if (message) {
+		var encrypted = message.toEncrypted(inputs[0].txid);
+		for (var bytesWrote = 0; bytesWrote < encrypted.length; bytesWrote += util.MAX_OP_RETURN) {
+			tx.addOutput(bitcoin.script.nullDataOutput(encrypted.slice(bytesWrote, bytesWrote + util.MAX_OP_RETURN)), 0);
+		}
 	}
 	// Add change.
-	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
-	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
+	var changeScript = bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network));
+	if (change.fee_per_kb) {
+		// first, add a dummy change output to calculate the correct fee
+		var idx = tx.addOutput(changeScript, util.DUST_VALUE);
+		var fee = util.calculateFee(tx, change.fee_per_kb);
+		var outValue = dest ? dest.value : 0;
+		var changeValue = inValue - outValue - fee;
+
+		// if there aren't enough funds to cover the fee, either reduce the output value or throw an error
+		if (changeValue < util.DUST_VALUE) {
+			// remove the output
+			tx.outs.splice(idx);
+			if (!dest || !dest.flexible) throw new Error('Insufficient funds');
+			tx.outs[0].value = inValue - fee;
+		} else {
+			tx.outs[idx].value = changeValue;
+		}
+	} else {
+		tx.addOutput(changeScript, change.value);
+	}
 	return tx.toBuffer();
+};
+
+util.calculateFee = function (tx, feePerKb) {
+	var txSize = tx.ins.length * 148 + tx.outs.length * 34 + 10;
+	return Math.floor(txSize * feePerKb / 1024);
 };
 
 util.parseTransaction = function(rawtx, network) {
