@@ -203,20 +203,16 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 	// Add change.
 	var changeScript = bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network));
 	if (change.fee_per_kb) {
-		// first, add a dummy change output to calculate the correct fee
-		var idx = tx.addOutput(changeScript, util.DUST_VALUE);
-		var fee = util.calculateFee(tx, change.fee_per_kb);
+		var fee = util.calculateFee(tx, change.fee_per_kb, true);
 		var outValue = dest ? dest.value : 0;
 		var changeValue = inValue - outValue - fee;
 
 		// if there aren't enough funds to cover the fee, either reduce the output value or throw an error
 		if (changeValue < util.DUST_VALUE) {
-			// remove the output
-			tx.outs.splice(idx);
-			if (!dest || !dest.flexible) throw new Error('Insufficient funds');
+			if (!(dest && dest.flexible)) throw new Error('Insufficient funds');
 			tx.outs[0].value = inValue - fee;
 		} else {
-			tx.outs[idx].value = changeValue;
+			tx.addOutput(changeScript, changeValue);
 		}
 	} else {
 		tx.addOutput(changeScript, change.value);
@@ -224,8 +220,9 @@ util.buildTransaction = function(inputs, dest, message, change, network) {
 	return tx.toBuffer();
 };
 
-util.calculateFee = function (tx, feePerKb) {
-	var txSize = tx.ins.length * 148 + tx.outs.length * 34 + 10;
+util.calculateFee = function (tx, feePerKb, simulateChange) {
+	var change = simulateChange ? 34 : 0;
+	var txSize = tx.ins.length * 148 + tx.outs.length * 34 + 10 + change;
 	return Math.floor(txSize * feePerKb / 1024);
 };
 
