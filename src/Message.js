@@ -15,9 +15,15 @@ var Message = function(id, data, prefix) {
 	this.data = data;
 };
 
-Message.prototype.toSerialized = function() {
-	var bufid = Buffer.alloc(4);
-	bufid.writeUInt32BE(this.id);
+Message.prototype.toSerialized = function(oldStyle) {
+	var bufid;
+	if(oldStyle) {
+		bufid = Buffer.alloc(4);
+		bufid.writeUInt32BE(this.id);
+	} else {
+		bufid = Buffer.alloc(1);
+		bufid.writeUInt8(this.id);
+	}
 	return Buffer.concat([
 		Buffer.from(this.prefix),
 		bufid,
@@ -29,8 +35,8 @@ Message.prototype.toSerialized = function() {
  * Generate an encrypted binary data.
  * @param Buffer/String key A key used to sign. Buffer or hex-encoded string.
  */
-Message.prototype.toEncrypted = function(key) {
-	return util.arc4(key, this.toSerialized());
+Message.prototype.toEncrypted = function(key, oldStyle) {
+	return util.arc4(key, this.toSerialized(oldStyle));
 };
 
 Message.TYPES = {
