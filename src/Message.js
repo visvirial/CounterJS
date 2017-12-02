@@ -15,9 +15,15 @@ var Message = function(id, data, prefix) {
 	this.data = data;
 };
 
-Message.prototype.toSerialized = function() {
-	var bufid = Buffer.alloc(4);
-	bufid.writeUInt32BE(this.id);
+Message.prototype.toSerialized = function(oldStyle) {
+	var bufid;
+	if(oldStyle) {
+		bufid = Buffer.alloc(4);
+		bufid.writeUInt32BE(this.id);
+	} else {
+		bufid = Buffer.alloc(1);
+		bufid.writeUInt8(this.id);
+	}
 	return Buffer.concat([
 		Buffer.from(this.prefix),
 		bufid,
@@ -29,8 +35,8 @@ Message.prototype.toSerialized = function() {
  * Generate an encrypted binary data.
  * @param Buffer/String key A key used to sign. Buffer or hex-encoded string.
  */
-Message.prototype.toEncrypted = function(key) {
-	return util.arc4(key, this.toSerialized());
+Message.prototype.toEncrypted = function(key, oldStyle) {
+	return util.arc4(key, this.toSerialized(oldStyle));
 };
 
 Message.TYPES = {
@@ -158,6 +164,19 @@ Message.TYPES = {
 				type: 'UInt64BE',
 			},
 		],
+	},
+	2: {
+		type: 'Enhanced Send',
+		structure: [
+			{
+				label: 'asset_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'quantity',
+				type: 'UInt64BE',
+			},
+		],
 	}
 };
 
@@ -246,8 +265,12 @@ Message.fromSerialized = function(ser) {
 	}
 	if(!prefix) throw new Error('Invalid prefix.');
 	if(ser.length < prefix.length + 4) throw new Error('Insufficient data length');
-	var id = ser.readUInt32BE(prefix.length);
-	var data = ser.slice(prefix.length+4);
+	var id = ser.readUInt8(prefix.length);
+	// zero represents legacy cp transactions to read the 4bytes instead of 1
+	var data = ser.slice(prefix.length + (id==0 ? 4 : 1));
+	if(id == 0) {
+		id = ser.readUInt32BE(prefix.length);
+	}
 	return new Message(id, data, prefix);
 };
 
