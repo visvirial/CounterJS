@@ -261,10 +261,10 @@ Message.fromSerialized = function(ser) {
 	if(ser.length < prefix.length + 4) throw new Error('Insufficient data length');
 	var id = ser.readUInt8(prefix.length);
 	// zero represents legacy cp transactions to read the 4bytes instead of 1
+	var data = ser.slice(prefix.length + (id==0 ? 4 : 1));
 	if(id == 0) {
 		id = ser.readUInt32BE(prefix.length);
 	}
-	var data = ser.slice(prefix.length + (id==0 ? 4 : 1))
 	return new Message(id, data, prefix);
 };
 
