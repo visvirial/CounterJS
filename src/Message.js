@@ -159,19 +159,19 @@ Message.TYPES = {
 			},
 		],
 	},
-    2: {
-        type: 'Enhanced Send',
-        structure: [
-            {
-                label: 'asset_id',
-                type: 'AssetID',
-            },
-            {
-                label: 'quantity',
-                type: 'UInt64BE',
-            },
-        ],
-    }
+	2: {
+		type: 'Enhanced Send',
+		structure: [
+			{
+				label: 'asset_id',
+				type: 'AssetID',
+			},
+			{
+				label: 'quantity',
+				type: 'UInt64BE',
+			},
+		],
+	}
 };
 
 Message.prototype.parse = function() {
@@ -249,7 +249,6 @@ Message.prototype.toString = function() {
  * Returns a new Message instance from a given serialized and decoded buffer object.
  */
 Message.fromSerialized = function(ser) {
-
 	if(typeof ser == 'string') ser = Buffer.from(ser, 'hex');
 	var prefix = null;
 	if(ser.length >= 8 && ser.slice(0, 8).toString() == 'CNTRPRTY') {
@@ -260,17 +259,12 @@ Message.fromSerialized = function(ser) {
 	}
 	if(!prefix) throw new Error('Invalid prefix.');
 	if(ser.length < prefix.length + 4) throw new Error('Insufficient data length');
-
-    var id = ser.readUInt8(prefix.length);
-    
-    if(id == 0){//zero represents legacy cp transactions to read the 4bytes instead of 1
-	   id = ser.readUInt32BE(prefix.length);
-       var data = ser.slice(prefix.length+4);
-    }else{
-
-       var data = ser.slice(prefix.length+1);
-    }
-    
+	var id = ser.readUInt8(prefix.length);
+	// zero represents legacy cp transactions to read the 4bytes instead of 1
+	if(id == 0) {
+		id = ser.readUInt32BE(prefix.length);
+	}
+	var data = ser.slice(prefix.length + (id==0 ? 4 : 1))
 	return new Message(id, data, prefix);
 };
 
