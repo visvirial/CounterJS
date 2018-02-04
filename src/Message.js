@@ -177,6 +177,11 @@ Message.TYPES = {
 				label: 'quantity',
 				type: 'UInt64BE',
 			},
+            		{
+                		label: 'destination',
+                		type: 'Address',
+            		},
+			
 		],
 	}
 };
