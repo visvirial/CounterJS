@@ -232,8 +232,12 @@ Message.prototype.parse = function() {
 				data[item.label] = util.assetIdToName(new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true));
 				offset += 8;
 				break;
-			default:
-				throw new Error('Internal error: invalid item type: '+item.type)
+      			case 'Address': 
+        			var hexString = this.data.toString('hex'); 
+        			data[item.label] = hexString.substr(32, 42);
+        			break; 
+      			default:
+      			console.error('invalid item type: '+item.type); 
 		}
 	}
 	return {
