@@ -42,5 +42,26 @@ describe('util', function() {
 		var rawtx = util.buildTransaction(inputs, 'msTBjkycK1ZmPq1EBkQUwvSYq2fm5KrpJJ', message, change, 'testnet', true/*oldStyle*/);
 		assert.deepEqual(rawtx.toString('hex'), '0100000001a846b9095330b95f689cef39d3d1871c98f9bc45d9b633fc0860f1e688130e990100000000ffffffff0336150000000000001976a91482eb113f0455107b1788093844f3027595b0b44888ac00000000000000001e6a1c6ad7042493a8749786f99d122f7aaa23dd5ac4d90d98acad76d9a7a92abdf405000000001976a9148be5ed53f1529e493b4c06f945f805b31afb400388ac00000000');
 	});
+  it('should accept Monacoin network', function() {
+    assert(util.getBitcoinJSNetwork('monacoin').name === 'Monacoin');
+  });
+  it('should be kept backward compatibilty for getBitcoinJSNetwork()', function() {
+    assert(util.getBitcoinJSNetwork().pubKeyHash === 0);
+    assert(util.getBitcoinJSNetwork('mainnet').pubKeyHash === 0);
+    assert(util.getBitcoinJSNetwork('testnet').pubKeyHash === 0x6f);
+  });
+  it('should support BTC/XCP on Counterparty network.', function() {
+    assert(util.assetNameToId('BTC').equals(0));
+    assert(util.assetNameToId('XCP').equals(1));
+    assert(util.assetIdToName(Long.fromInt(0)) === 'BTC');
+    assert(util.assetIdToName(Long.fromInt(1)) === 'XCP');
+  });
+  it('should support MONA/XMP on Monaparty network.', function() {
+    var network = util.getBitcoinJSNetwork('monacoin');
+    assert(util.assetNameToId('MONA', network).equals(0));
+    assert(util.assetNameToId('XMP', network).equals(1));
+    assert(util.assetIdToName(Long.fromInt(0), network) === 'MONA');
+    assert(util.assetIdToName(Long.fromInt(1), network) === 'XMP');
+  });
 });
 

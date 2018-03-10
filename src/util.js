@@ -1,9 +1,14 @@
 'use strict';
 
 var Long = require('long');
+var coininfo = require('coininfo');
 var bitcoin = require('bitcoinjs-lib');
 var bufferReverse = require('buffer-reverse');
 
+var keyAssets = {
+  Bitcoin: [ 'BTC', 'XCP' ],
+  Monacoin: [ 'MONA', 'XMP' ]
+};
 var util = {};
 
 util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -18,7 +23,11 @@ util.getBitcoinJSNetwork = function(str) {
 		case 'testnet':
 			return bitcoin.networks.testnet;
 		default:
-			throw new Error('Invalid network name specified');
+			try {
+				return coininfo(str).toBitcoinJS();
+			} catch (e) {
+				throw new Error('Invalid network name specified');
+			}
 	}
 };
 
@@ -88,9 +97,10 @@ util.mnemonicToPrivateKey = function(passphrase, index, network) {
 	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
 };
 
-util.assetIdToName = function(asset_id) {
-	if(asset_id.equals(0)) return 'BTC';
-	if(asset_id.equals(1)) return 'XCP';
+util.assetIdToName = function(asset_id, network) {
+  var networkName = (network && network.name) ? network.name : 'Bitcoin';
+	if(asset_id.equals(0)) return keyAssets[networkName][0];
+	if(asset_id.equals(1)) return keyAssets[networkName][1];
 	if(asset_id.lessThan(26 * 26 * 26)) {
 		throw new Error('Asset ID is too low');
 	}
@@ -107,9 +117,11 @@ util.assetIdToName = function(asset_id) {
 	return asset_name;
 };
 
-util.assetNameToId = function(asset_name) {
-	if(asset_name == 'BTC') return Long.fromInt(0);
-	if(asset_name == 'XCP') return Long.fromInt(1);
+util.assetNameToId = function(asset_name, network) {
+  var networkName = (network && network.name) ? network.name : 'Bitcoin';
+	if(asset_name === keyAssets[networkName][0]) return Long.fromInt(0);
+	if(asset_name === keyAssets[networkName][1]) return Long.fromInt(1);
+
 	if(asset_name.length < 4) {
 		throw new Error('Asset name is too short');
 	}
@@ -144,7 +156,7 @@ util.assetNameToId = function(asset_name) {
 /**
  * Convert given data to asset ID.
  */
-util.toAssetId = function(asset) {
+util.toAssetId = function(asset, network) {
 	if(asset instanceof Long) return Long.fromValue(asset);
 	if(typeof asset == 'number') {
 		return Long.fromInteger(asset, true);
@@ -154,7 +166,7 @@ util.toAssetId = function(asset) {
 		if(asset[0] == 'A') {
 			return Long.fromString(asset.substr(1), true);
 		}
-		return util.assetNameToId(asset);
+		return util.assetNameToId(asset, network);
 	}
 	throw new Error('Invalid asset type');
 };
@@ -196,8 +208,8 @@ util.buildTransaction = function(inputs, dest, message, change, network, oldStyl
 	return tx.toBuffer();
 };
 
-util.parseTransaction = function(rawtx, network) {
-	network = network || 'mainnet';
+util.parseTransaction = function(rawtx, networkName) {
+	var network = util.getBitcoinJSNetwork(networkName);
 	var tx = null
 	if(rawtx instanceof Buffer) {
 		tx = bitcoin.Transaction.fromBuffer(rawtx);
@@ -237,7 +249,7 @@ util.parseTransaction = function(rawtx, network) {
 		if(type == 'pubkeyhash') {
 			if(!destination && rawdata.length===0) {
 				destination = {
-					address: bitcoin.address.toBase58Check(out.script.slice(3, 23), {mainnet: 0x00, testnet: 0x6f}[network]),
+					address: bitcoin.address.toBase58Check(out.script.slice(3, 23), network.pubKeyHash),
 					amount: out.value,
 				};
 			}
