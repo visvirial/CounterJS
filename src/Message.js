@@ -435,39 +435,26 @@ Message.createPublish = function() {
 //Message.createRPS = function() {};
 //Message.createRPSResolve = function() {};
 
-Message.createSend = function(asset, quantity) {
+Message.createSend = function(asset, quantity, destinationAddress) {
 	// Accept flexible params.
 	var asset_id = util.toAssetId(asset);
 	quantity = Long.fromValue(quantity);
 	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
 	var buf_quantity = Buffer.from(quantity.toBytesBE());
-	return new Message(0, Buffer.concat([
-		buf_asset_id,
-		buf_quantity,
-	]));
-};
+  var packet = [buf_asset_id, buf_quantity];
+  if (destinationAddress) {
+	  var decodedAddress = bitcoin.address.fromBase58Check(destinationAddress);
+	  var buf_network_prefix = Buffer.alloc(1);
+	  buf_network_prefix.writeUInt8(decodedAddress.version);
+	  var buf_public_key_hash = decodedAddress.hash;
 
-Message.createEnhancedSend = function(asset, quantity, destinationAddress) {
-	// Accept flexible params.
-	var asset_id = util.toAssetId(asset);
-	quantity = Long.fromValue(quantity);
+    packet.push(buf_network_prefix);
+    packet.push(buf_public_key_hash);
+  }
 
-	// Create input buffers.
-
-	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
-	var buf_quantity = Buffer.from(quantity.toBytesBE());
-	var decodedAddress = bitcoin.address.fromBase58Check(destinationAddress);
-	var buf_public_key_hash = decodedAddress.hash; 
-	var buf_network_prefix = Buffer.alloc(1);
-		buf_network_prefix.writeUInt8(decodedAddress.version);
-
-	return new Message(2, Buffer.concat([
-		buf_asset_id,
-		buf_quantity,
-		buf_network_prefix,
-		buf_public_key_hash,
-	]));
+	return new Message(destinationAddress ? 2 : 0,
+    Buffer.concat(packet));
 };
 
 module.exports = Message;
