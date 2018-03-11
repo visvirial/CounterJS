@@ -54,5 +54,10 @@ describe('Message', function() {
 			Message.createSend('XCP', 100000000).data.toString('hex'),
 			'00000000000000010000000005f5e100');
 	});
+	it('should create Enhanced Send message correctly', function() {
+		assert.equal(
+			Message.createSend('XCP', 100000000, '1Ku5RRMfYBD1eNxFThWkgXbKqmEa1mb6zp').data.toString('hex'),
+			'00000000000000010000000005f5e10000cf4b95a940db78915813e7e21a1207fb2b2669aa');
+	});
 });
 
