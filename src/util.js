@@ -147,7 +147,7 @@ util.assetNameToId = function(asset_name) {
 util.toAssetId = function(asset) {
 	if(asset instanceof Long) return Long.fromValue(asset);
 	if(typeof asset == 'number') {
-		return Long.fromInteger(asset, true);
+		return Long.fromInt(asset, true);
 	}
 	if(typeof asset == 'string') {
 		// If start from A.
