@@ -176,6 +176,10 @@ Message.TYPES = {
 				label: 'quantity',
 				type: 'UInt64BE',
 			},
+			{
+				label: 'destination',
+				type: 'Address',
+			},
 		],
 	}
 };
@@ -225,6 +229,10 @@ Message.prototype.parse = function() {
 			case 'AssetID':
 				data[item.label] = util.assetIdToName(new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true));
 				offset += 8;
+				break;
+			case 'Address':
+				var hexString = this.data.toString('hex');
+				data[item.label] = hexString.substr(32, 42);
 				break;
 			default:
 				throw new Error('Internal error: invalid item type: '+item.type)
@@ -438,5 +446,27 @@ Message.createSend = function(asset, quantity) {
 	]));
 };
 
-module.exports = Message;
+Message.createEnhancedSend = function(asset, quantity,network_prefix,public_key_hash) {
+	// Accept flexible params.
 
+	var asset_id = util.toAssetId(asset);
+	quantity = Long.fromValue(quantity);
+
+ 	// Create input buffers.
+ 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
+	var buf_quantity = Buffer.from(quantity.toBytesBE());
+
+  	var buf_public_key_hash = public_key_hash;
+  	var buf_network_prefix = Buffer.alloc(1);
+    	buf_network_prefix.writeUInt8(network_prefix);
+
+ 	return new Message(2, Buffer.concat([
+		buf_asset_id,
+		buf_quantity,
+		buf_network_prefix,
+		buf_public_key_hash,
+	]));
+};
+
+
+module.exports = Message;
