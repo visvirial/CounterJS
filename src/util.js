@@ -129,7 +129,7 @@ util.assetNameToId = function(asset_name) {
 		throw new Error('Asset name is too long');
 	}
 	var asset_id = Long.fromInt(0);
-	for(var i in asset_name) {
+	for (var i = 0; i < asset_name.length; i++) {
 		var c = asset_name[i];
 		var n = util.B26DIGITS.search(c);
 		if(n < 0) throw new Error('Invalid character: ' + c);
