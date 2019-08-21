@@ -180,7 +180,7 @@ Message.TYPES = {
 	}
 };
 
-Message.prototype.parse = function() {
+Message.prototype.parse = function(network) {
 	var struct = Message.TYPES[this.id];
 	if(!struct) {
 		throw new Error('Invalid message ID');
@@ -223,7 +223,7 @@ Message.prototype.parse = function() {
 				offset += item.length;
 				break;
 			case 'AssetID':
-				data[item.label] = util.assetIdToName(new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true));
+				data[item.label] = util.assetIdToName(new Long(this.data.readUInt32BE(offset+4), this.data.readUInt32BE(offset), true), network);
 				offset += 8;
 				break;
 			default:
@@ -344,9 +344,9 @@ Message.createDestroy = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createDividend = function(quantity_per_unit, asset, dividend_asset) {
+Message.createDividend = function(quantity_per_unit, asset, dividend_asset, network) {
 	quantity_per_unit = Long.fromValue(quantity_per_unit);
-	var asset_id = util.toAssetId(asset);
+	var asset_id = util.toAssetId(asset, network);
 	var dividend_asset_id = util.toAssetId(dividend_asset);
 	// Create input buffers.
 	var buf_quantity_per_unit = Buffer.from(quantity_per_unit.toBytesBE());
@@ -363,12 +363,15 @@ Message.createExecute = function() {
 	throw new Error('Not implemented');
 };
 
-Message.createIssuance = function(asset, quantity, divisible, description, callable, call_date, call_price) {
+/**
+ * @param network optional.
+ */
+Message.createIssuance = function(asset, quantity, divisible, description, callable, call_date, call_price, network) {
 	callable = callable || false;
 	call_date = call_date || 0;
 	call_price = call_price || 0.0;
 	// Accept flexible params.
-	var asset_id = util.toAssetId(asset);
+	var asset_id = util.toAssetId(asset, network);
 	quantity = Long.fromValue(quantity);
 	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
@@ -391,12 +394,12 @@ Message.createIssuance = function(asset, quantity, divisible, description, calla
 	]));
 };
 
-Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required) {
+Message.createOrder = function(give_id, give_quantity, get_id, get_quantity, expiration, fee_required, network) {
 	fee_required = fee_required || 0;
 	// Accept flexible params.
-	give_id = util.toAssetId(give_id);
+	give_id = util.toAssetId(give_id, network);
 	give_quantity = Long.fromValue(give_quantity);
-	get_id = util.toAssetId(get_id);
+	get_id = util.toAssetId(get_id, network);
 	get_quantity = Long.fromValue(get_quantity);
 	fee_required = Long.fromValue(fee_required);
 	// Create input buffers.
@@ -425,9 +428,9 @@ Message.createPublish = function() {
 //Message.createRPS = function() {};
 //Message.createRPSResolve = function() {};
 
-Message.createSend = function(asset, quantity) {
+Message.createSend = function(asset, quantity, network) {
 	// Accept flexible params.
-	var asset_id = util.toAssetId(asset);
+	var asset_id = util.toAssetId(asset, network);
 	quantity = Long.fromValue(quantity);
 	// Create input buffers.
 	var buf_asset_id = Buffer.from(asset_id.toBytesBE());
