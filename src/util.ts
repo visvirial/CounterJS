@@ -2,18 +2,18 @@
 import Long from 'long';
 import coininfo from 'coininfo';
 import * as bitcoin from 'bitcoinjs-lib';
-import bufferReverse from 'buffer-reverse';
 
 import MNEMONIC_WORDS from './mnemonic_words';
 import Message from './Message';
 
-const KEY_ASSETS = {
-	Bitcoin: [ 'BTC', 'XCP' ],
-	Monacoin: [ 'MONA', 'XMP' ]
-};
-
 const B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const MAX_OP_RETURN = 80;
+
+const reverse = (hex: string): string => {
+	const match = hex.match(/[a-fA-F0-9]{2}/g);
+	if(match === null) throw new Error('Invalid hex string.');
+	return match.reverse().join('');
+};
 
 const getBitcoinJSNetwork = (str: string='mainnet'): bitcoin.Network => {
 	switch(str) {
@@ -86,9 +86,14 @@ const mnemonicToPrivateKey = (passphrase: string[2]|string, index: number, netwo
 	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
 };
 
-const assetIdToName = (asset_id: Long, networkName: 'Bitcoin'|'Monacoin'='Bitcoin'): string => {
-	if(asset_id.equals(0)) return KEY_ASSETS[networkName][0];
-	if(asset_id.equals(1)) return KEY_ASSETS[networkName][1];
+const KEY_ASSETS = {
+	Bitcoin: [ 'BTC', 'XCP' ],
+	Monacoin: [ 'MONA', 'XMP' ]
+};
+
+const assetIdToName = (asset_id: Long, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): string => {
+	if(asset_id.equals(0)) return KEY_ASSETS[coin][0];
+	if(asset_id.equals(1)) return KEY_ASSETS[coin][1];
 	if(asset_id.lessThan(26 * 26 * 26)) {
 		throw new Error('Asset ID is too low');
 	}
@@ -105,9 +110,9 @@ const assetIdToName = (asset_id: Long, networkName: 'Bitcoin'|'Monacoin'='Bitcoi
 	return asset_name;
 };
 
-const assetNameToId = (asset_name: string, networkName: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
-	if(asset_name === KEY_ASSETS[networkName][0]) return Long.fromInt(0);
-	if(asset_name === KEY_ASSETS[networkName][1]) return Long.fromInt(1);
+const assetNameToId = (asset_name: string, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
+	if(asset_name === KEY_ASSETS[coin][0]) return Long.fromInt(0, true);
+	if(asset_name === KEY_ASSETS[coin][1]) return Long.fromInt(1, true);
 	if(asset_name.length < 4) {
 		throw new Error('Asset name is too short');
 	}
@@ -126,7 +131,7 @@ const assetNameToId = (asset_name: string, networkName: 'Bitcoin'|'Monacoin'='Bi
 	if(asset_name.length >= 13) {
 		throw new Error('Asset name is too long');
 	}
-	let asset_id = Long.fromInt(0);
+	let asset_id = Long.fromInt(0, true);
 	for(const c of asset_name.split('')) {
 		const n = B26DIGITS.search(c);
 		if(n < 0) throw new Error('Invalid character: ' + c);
@@ -141,7 +146,7 @@ const assetNameToId = (asset_name: string, networkName: 'Bitcoin'|'Monacoin'='Bi
 /**
  * Convert given data to asset ID.
  */
-const toAssetId = (asset: number|string|Long, networkName: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
+const toAssetId = (asset: number|string|Long, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
 	if(asset instanceof Long) return Long.fromValue(asset);
 	if(typeof asset == 'number') {
 		return Long.fromInt(asset, true);
@@ -151,7 +156,7 @@ const toAssetId = (asset: number|string|Long, networkName: 'Bitcoin'|'Monacoin'=
 		if(asset[0] == 'A') {
 			return Long.fromString(asset.substr(1), true);
 		}
-		return assetNameToId(asset, networkName);
+		return assetNameToId(asset, coin);
 	}
 	throw new Error('Invalid asset type');
 };
@@ -164,11 +169,11 @@ const toAssetId = (asset: number|string|Long, networkName: 'Bitcoin'|'Monacoin'=
  * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: AMOUNT, fee_per_kb: FEE_PER_KB}. If fee_per_kb is specified, the fee amount will be determined from a transaction size and `value` will be ignored.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
-const buildTransaction = (inputs: { txid: string, vout: number }[], dest: string|{ address: string, value?: number }, message: Message, change: {address: string, value: number, fee_per_kb?: number}, networkName: 'Bitcoin'|'Monacoin'='Bitcoin', oldStyle: boolean=false) => {
+const buildTransaction = (inputs: { txid: string, vout: number }[], dest: string|{ address: string, value?: number }, message: Message, change: {address: string, value: number, fee_per_kb?: number}, networkName: string='mainnet', oldStyle: boolean=false) => {
 	let tx = new bitcoin.Transaction();
 	// Add inputs.
 	for(const input of inputs) {
-		const hash = Buffer.from(bufferReverse(Buffer.from(input.txid)).join(''), 'hex');
+		const hash = Buffer.from(reverse(input.txid), 'hex');
 		tx.addInput(hash, input.vout);
 	}
 	// Add destination output.
@@ -182,7 +187,7 @@ const buildTransaction = (inputs: { txid: string, vout: number }[], dest: string
 		tx.addOutput(bitcoin.address.toOutputScript(dest.address, getBitcoinJSNetwork(networkName)), dest.value||5430);
 	}
 	// Add message.
-	let encrypted = message.toEncrypted(Buffer.from(inputs[0].txid), oldStyle);
+	let encrypted = message.toEncrypted(Buffer.from(inputs[0].txid, 'hex'), oldStyle);
 	for(let bytesWrote=0; bytesWrote<encrypted.length; bytesWrote+=MAX_OP_RETURN) {
 		tx.addOutput((<any>bitcoin.script).nullDataOutput(encrypted.slice(bytesWrote, bytesWrote+MAX_OP_RETURN)), 0);
 	}
@@ -192,7 +197,7 @@ const buildTransaction = (inputs: { txid: string, vout: number }[], dest: string
 	return tx.toBuffer();
 };
 
-const parseTransaction = (rawtx: Buffer, networkName: 'Bitcoin'|'Monacoin'='Bitcoin') => {
+const parseTransaction = (rawtx: Buffer, networkName: string='mainnet') => {
 	let network = getBitcoinJSNetwork(networkName);
 	let tx = null
 	if(rawtx instanceof Buffer) {
@@ -205,7 +210,7 @@ const parseTransaction = (rawtx: Buffer, networkName: 'Bitcoin'|'Monacoin'='Bitc
 		throw new Error('Invalid data type for rawtx');
 	}
 	// Get encryption key.
-	let key = bufferReverse(tx.ins[0].hash);
+	let key = Buffer.from(reverse(tx.ins[0].hash.toString('hex')), 'hex');
 	// Parse input to determine source pubkey.
 	let source = ((inputs) => {
 		let sources: Buffer[] = [];

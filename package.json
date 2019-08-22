@@ -36,18 +36,31 @@
   },
   "devDependencies": {
     "@types/bitcoinjs-lib": "^4.0.1",
+    "@types/jest": "^23.0.1",
     "@types/long": "^4.0.0",
     "@types/node": "^12.7.2",
     "browserify": "^13.1.1",
     "istanbul": "^0.4.5",
     "istanbul-coveralls": "^1.0.3",
-    "mocha": "^6.2.0",
+    "jest": "^23.0.0",
     "terser": "^4.2.0",
+    "ts-jest": "^23.0.1",
     "tsify": "^4.0.1",
     "typescript": "^3.5.3"
   },
-  "jshintConfig": {
-    "esversion": 6,
-    "node": true
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "jsx"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "testMatch": [
+      "**/?(*.)+(spec|test).ts"
+    ]
   }
 }

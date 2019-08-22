@@ -23,7 +23,7 @@ export default class Message {
 		this.prefix = prefix;
 	};
 	
-	toSerialized(oldStyle: boolean): Buffer {
+	toSerialized(oldStyle: boolean=false): Buffer {
 		let bufid;
 		if(oldStyle) {
 			bufid = Buffer.alloc(4);
@@ -43,7 +43,7 @@ export default class Message {
 	 * Generate an encrypted binary data.
 	 * @param Buffer key A key used to sign.
 	 */
-	toEncrypted(key: Buffer, oldStyle: boolean): Buffer {
+	toEncrypted(key: Buffer, oldStyle: boolean=false): Buffer {
 		return util.arc4(key, this.toSerialized(oldStyle));
 	}
 	
@@ -142,8 +142,8 @@ export default class Message {
 	};
 	
 	/**
-	 * @param Buffer/String key The key to decode given data (the txid of first input of a transaction).
-	 * @param Buffer/String data The data chunk embedded in a transaction.
+	 * @param Buffer key The key to decode given data (the txid of first input of a transaction).
+	 * @param Buffer data The data chunk embedded in a transaction.
 	 */
 	static fromEncrypted(key: Buffer, data: Buffer) {
 		return Message.fromSerialized(util.arc4(key, data));
@@ -251,14 +251,22 @@ export default class Message {
 		]));
 	};
 	
-	static createOrder(give_id: Long, give_quantity: Long|number|string|{low: number, high: number, unsigned: boolean}, get_id: Long, get_quantity: Long|number|string|{low: number, high: number, unsigned: boolean}, expiration: number, fee_required: Long|number|string|{low: number, high: number, unsigned: boolean}=0, network: bitcoin.Network) {
+	static createOrder(
+		give_id: number|string|Long,
+		give_quantity: Long|number|string|{low: number, high: number, unsigned: boolean},
+		get_id: number|string|Long,
+		get_quantity: Long|number|string|{low: number, high: number, unsigned: boolean},
+		expiration: number,
+		fee_required: Long|number|string|{low: number, high: number, unsigned: boolean}=0) {
+		const long_give_id = util.toAssetId(give_id);
 		const long_give_quantity = Long.fromValue(give_quantity);
+		const long_get_id = util.toAssetId(get_id);
 		const long_get_quantity = Long.fromValue(get_quantity);
 		const long_fee_required = Long.fromValue(fee_required);
 		// Create input buffers.
-		let buf_give_id = Buffer.from(give_id.toBytesBE());
+		let buf_give_id = Buffer.from(long_give_id.toBytesBE());
 		let buf_give_quantity = Buffer.from(long_give_quantity.toBytesBE());
-		let buf_get_id = Buffer.from(get_id.toBytesBE());
+		let buf_get_id = Buffer.from(long_get_id.toBytesBE());
 		let buf_get_quantity = Buffer.from(long_get_quantity.toBytesBE());
 		let buf_expiration = Buffer.alloc(2);
 		buf_expiration.writeUInt16BE(expiration, 0);
