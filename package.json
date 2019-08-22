@@ -17,10 +17,10 @@
     "type": "git",
     "url": "https://github.com/visvirial/CounterJS.git"
   },
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "tsc": "./node_modules/.bin/tsc",
+    "build": "./node_modules/.bin/tsc",
     "test": "./node_modules/.bin/jest --coverage",
     "mkdist": "mkdir -p dist",
     "browser:browserify": "browserify src/index.ts -p [ tsify --noImplicitAny ] --standalone counterjs >dist/bundle.js",
@@ -34,14 +34,14 @@
   },
   "devDependencies": {
     "@types/bitcoinjs-lib": "^4.0.1",
-    "@types/jest": "^23.0.1",
+    "@types/jest": "^23.0.0",
     "@types/long": "^4.0.0",
     "@types/node": "^12.7.2",
     "browserify": "^13.1.1",
     "coveralls": "^3.0.6",
     "jest": "^23.0.0",
     "terser": "^4.2.0",
-    "ts-jest": "^23.0.1",
+    "ts-jest": "^23.0.0",
     "tsify": "^4.0.1",
     "typescript": "^3.5.3"
   },
