@@ -1,56 +1,51 @@
-'use strict';
 
-var Long = require('long');
-var coininfo = require('coininfo');
-var bitcoin = require('bitcoinjs-lib');
-var bufferReverse = require('buffer-reverse');
+import Long from 'long';
+import coininfo from 'coininfo';
+import * as bitcoin from 'bitcoinjs-lib';
 
-var keyAssets = {
-  Bitcoin: [ 'BTC', 'XCP' ],
-  Monacoin: [ 'MONA', 'XMP' ]
+import MNEMONIC_WORDS from './mnemonic_words';
+import Message from './Message';
+
+const B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const MAX_OP_RETURN = 80;
+
+const reverse = (hex: string): string => {
+	const match = hex.match(/[a-fA-F0-9]{2}/g);
+	if(match === null) throw new Error('Invalid hex string.');
+	return match.reverse().join('');
 };
-var util = {};
 
-util.B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-util.MNEMONIC_WORDS = require('./mnemonic_words.json');
-util.MAX_OP_RETURN = 80;
-
-util.getBitcoinJSNetwork = function(str) {
-	str = str || 'mainnet';
+const getBitcoinJSNetwork = (str: string='mainnet'): bitcoin.Network => {
 	switch(str) {
 		case 'mainnet':
 			return bitcoin.networks.bitcoin;
 		case 'testnet':
 			return bitcoin.networks.testnet;
 		default:
-			try {
-				return coininfo(str).toBitcoinJS();
-			} catch (e) {
-				throw new Error('Invalid network name specified');
-			}
+			const ci = coininfo(str);
+			if(ci === null) throw new Error('Invalid network name specified');
+			return ci.toBitcoinJS();
 	}
 };
 
 /**
  * Encrypt/Decrypt given data using (A)RC4.
  */
-util.arc4 = function(key, data) {
-	if(typeof key == 'string') key = Buffer.from(key, 'hex');
-	if(typeof data == 'string') data = Buffer.from(data, 'hex');
-	var S = [];
-	for(var i=0; i<256; i++) {
+const arc4 = (key: Buffer, data: Buffer): Buffer => {
+	let S = [];
+	for(let i=0; i<256; i++) {
 		S[i] = i;
 	}
-	for(var i=0,j=0; i<256; i++) {
+	for(let i=0,j=0; i<256; i++) {
 		j = (j + S[i] + key[i % key.length]) % 256;
 		[S[i], S[j]] = [S[j], S[i]];
 	}
-	var ret = [];
-	for(var x=0,i=0,j=0; x<data.length; x++) {
+	let ret = [];
+	for(let x=0,i=0,j=0; x<data.length; x++) {
 		i = (i + 1) % 256;
 		j = (j + S[i]) % 256;
 		[S[i], S[j]] = [S[j], S[i]];
-		var K = S[(S[i] + S[j]) % 256];
+		let K = S[(S[i] + S[j]) % 256];
 		ret.push(data[x] ^ K);
 	}
 	return Buffer.from(ret);
@@ -61,46 +56,44 @@ util.arc4 = function(key, data) {
  * @param passphrase If array of length 2, [menmonic, password]. Otherwise, mnemonic.
  * @return String WIF format private key.
  */
-util.mnemonicToPrivateKey = function(passphrase, index, network) {
-	var getMnemonic = function(data) {
+const mnemonicToPrivateKey = (passphrase: string[2]|string, index: number, network?: string): string => {
+	let getMnemonic = (data: string[2]|string): string[] => {
 		if(data.length == 2) {
 			throw new Error('Password is not implemented yet');
 		} else {
-			return data;
+			return data.split(' ');
 		}
 	};
-	var mnemonic = getMnemonic(passphrase);
-	if(typeof mnemonic == 'string') {
-		mnemonic = mnemonic.split(' ');
-	}
-	if(typeof mnemonic != 'object') {
-		throw new Error('Gieven mnemonic is an invalid type: ' + (typeof mnemonic));
-	}
+	const mnemonic = getMnemonic(passphrase);
 	if(mnemonic.length%3 !== 0) {
 		throw new Error('The length of mnemonic array should be divisible by 3');
 	}
-	var seed = Buffer.alloc(4*mnemonic.length/3);
-	const N = util.MNEMONIC_WORDS.length;
-	var mod = function(a, b) {
+	let seed = Buffer.alloc(4*mnemonic.length/3);
+	const N = MNEMONIC_WORDS.length;
+	let mod = (a: number, b: number): number => {
 		return a - Math.floor(a/b)*b;
 	};
-	for(var i=0; i<mnemonic.length/3; i++) {
-		var w1 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+0]);
-		var w2 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+1]);
-		var w3 = util.MNEMONIC_WORDS.indexOf(mnemonic[3*i+2]);
+	for(let i=0; i<mnemonic.length/3; i++) {
+		let w1 = MNEMONIC_WORDS.indexOf(mnemonic[3*i+0]);
+		let w2 = MNEMONIC_WORDS.indexOf(mnemonic[3*i+1]);
+		let w3 = MNEMONIC_WORDS.indexOf(mnemonic[3*i+2]);
 		if(w1<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+0]);
 		if(w2<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+1]);
 		if(w3<0) throw new Error('Invalid word specified: ' + mnemonic[3*i+2]);
 		seed.writeUInt32BE(w1 + N*mod(w2-w1, N) + N*N*mod(w3-w2, N), 4*i);
 	}
-	var master = bitcoin.HDNode.fromSeedBuffer(seed, util.getBitcoinJSNetwork(network));
+	let master = (<any>bitcoin).HDNode.fromSeedBuffer(seed, getBitcoinJSNetwork(network));
 	return master.derivePath('m/0\'/0/'+index).keyPair.toWIF();
 };
 
-util.assetIdToName = function(asset_id, network) {
-  var networkName = (network && network.name) ? network.name : 'Bitcoin';
-	if(asset_id.equals(0)) return keyAssets[networkName][0];
-	if(asset_id.equals(1)) return keyAssets[networkName][1];
+const KEY_ASSETS = {
+	Bitcoin: [ 'BTC', 'XCP' ],
+	Monacoin: [ 'MONA', 'XMP' ]
+};
+
+const assetIdToName = (asset_id: Long, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): string => {
+	if(asset_id.equals(0)) return KEY_ASSETS[coin][0];
+	if(asset_id.equals(1)) return KEY_ASSETS[coin][1];
 	if(asset_id.lessThan(26 * 26 * 26)) {
 		throw new Error('Asset ID is too low');
 	}
@@ -108,20 +101,18 @@ util.assetIdToName = function(asset_id, network) {
 	if(asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176'))) {
 		return 'A' + asset_id.toString();
 	}
-	var asset_name = '';
-	var rem = Long.fromValue(asset_id);
+	let asset_name = '';
+	let rem = Long.fromValue(asset_id);
 	for(;rem.greaterThan(0); rem=rem.divide(26)) {
-		var r = rem.mod(26);
-		asset_name = util.B26DIGITS[r] + asset_name;
+		let r = rem.mod(26);
+		asset_name = B26DIGITS[r.toInt()] + asset_name;
 	}
 	return asset_name;
 };
 
-util.assetNameToId = function(asset_name, network) {
-  var networkName = (network && network.name) ? network.name : 'Bitcoin';
-	if(asset_name === keyAssets[networkName][0]) return Long.fromInt(0);
-	if(asset_name === keyAssets[networkName][1]) return Long.fromInt(1);
-
+const assetNameToId = (asset_name: string, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
+	if(asset_name === KEY_ASSETS[coin][0]) return Long.fromInt(0, true);
+	if(asset_name === KEY_ASSETS[coin][1]) return Long.fromInt(1, true);
 	if(asset_name.length < 4) {
 		throw new Error('Asset name is too short');
 	}
@@ -131,7 +122,7 @@ util.assetNameToId = function(asset_name, network) {
 		if(!asset_name.match(/^A[0-9]+$/)) {
 			throw new Error('Non-numeric asset name should not start with "A"');
 		}
-		var asset_id = Long.fromString(asset_name.substr(1), true);
+		let asset_id = Long.fromString(asset_name.substr(1), true);
 		if(!asset_id.greaterThan(Long.fromString(/*26^12*/'95428956661682176', true))) {
 			throw new Error('Asset ID is too small');
 		}
@@ -140,10 +131,9 @@ util.assetNameToId = function(asset_name, network) {
 	if(asset_name.length >= 13) {
 		throw new Error('Asset name is too long');
 	}
-	var asset_id = Long.fromInt(0);
-	for(var i in asset_name) {
-		var c = asset_name[i];
-		var n = util.B26DIGITS.search(c);
+	let asset_id = Long.fromInt(0, true);
+	for(const c of asset_name.split('')) {
+		const n = B26DIGITS.search(c);
 		if(n < 0) throw new Error('Invalid character: ' + c);
 		asset_id = asset_id.multiply(26).add(n);
 	}
@@ -156,17 +146,17 @@ util.assetNameToId = function(asset_name, network) {
 /**
  * Convert given data to asset ID.
  */
-util.toAssetId = function(asset, network) {
+const toAssetId = (asset: number|string|Long, coin: 'Bitcoin'|'Monacoin'='Bitcoin'): Long => {
 	if(asset instanceof Long) return Long.fromValue(asset);
 	if(typeof asset == 'number') {
-		return Long.fromInteger(asset, true);
+		return Long.fromInt(asset, true);
 	}
 	if(typeof asset == 'string') {
 		// If start from A.
 		if(asset[0] == 'A') {
 			return Long.fromString(asset.substr(1), true);
 		}
-		return util.assetNameToId(asset, network);
+		return assetNameToId(asset, coin);
 	}
 	throw new Error('Invalid asset type');
 };
@@ -179,12 +169,11 @@ util.toAssetId = function(asset, network) {
  * @param Object change Excess bitcoins are paid to this address. Fromat: {address: CHANGE_ADDR, value: AMOUNT, fee_per_kb: FEE_PER_KB}. If fee_per_kb is specified, the fee amount will be determined from a transaction size and `value` will be ignored.
  * @return Buffer The unsinged raw transaction. You should sign it before broadcasting.
  */
-util.buildTransaction = function(inputs, dest, message, change, network, oldStyle) {
-	var tx = new bitcoin.Transaction();
+const buildTransaction = (inputs: { txid: string, vout: number }[], dest: string|{ address: string, value?: number }, message: Message, change: {address: string, value: number, fee_per_kb?: number}, networkName: string='mainnet', oldStyle: boolean=false) => {
+	let tx = new bitcoin.Transaction();
 	// Add inputs.
-	for(var i in inputs) {
-		var input = inputs[i];
-		var hash = Buffer.from(input.txid.match(/.{2}/g).reverse().join(''), 'hex');
+	for(const input of inputs) {
+		const hash = Buffer.from(reverse(input.txid), 'hex');
 		tx.addInput(hash, input.vout);
 	}
 	// Add destination output.
@@ -195,22 +184,22 @@ util.buildTransaction = function(inputs, dest, message, change, network, oldStyl
 				value: 5430,
 			};
 		}
-		tx.addOutput(bitcoin.address.toOutputScript(dest.address, util.getBitcoinJSNetwork(network)), dest.value);
+		tx.addOutput(bitcoin.address.toOutputScript(dest.address, getBitcoinJSNetwork(networkName)), dest.value||5430);
 	}
 	// Add message.
-	var encrypted = message.toEncrypted(inputs[0].txid, oldStyle);
-	for(var bytesWrote=0; bytesWrote<encrypted.length; bytesWrote+=util.MAX_OP_RETURN) {
-		tx.addOutput(bitcoin.script.nullDataOutput(encrypted.slice(bytesWrote, bytesWrote+util.MAX_OP_RETURN)), 0);
+	let encrypted = message.toEncrypted(Buffer.from(inputs[0].txid, 'hex'), oldStyle);
+	for(let bytesWrote=0; bytesWrote<encrypted.length; bytesWrote+=MAX_OP_RETURN) {
+		tx.addOutput((<any>bitcoin.script).nullDataOutput(encrypted.slice(bytesWrote, bytesWrote+MAX_OP_RETURN)), 0);
 	}
 	// Add change.
 	if(change.fee_per_kb) throw new Error('Calculating fee from change.fee_per_kb is not supported yet');
-	tx.addOutput(bitcoin.address.toOutputScript(change.address, util.getBitcoinJSNetwork(network)), change.value);
+	tx.addOutput(bitcoin.address.toOutputScript(change.address, getBitcoinJSNetwork(networkName)), change.value);
 	return tx.toBuffer();
 };
 
-util.parseTransaction = function(rawtx, networkName) {
-	var network = util.getBitcoinJSNetwork(networkName);
-	var tx = null
+const parseTransaction = (rawtx: Buffer, networkName: string='mainnet') => {
+	let network = getBitcoinJSNetwork(networkName);
+	let tx = null
 	if(rawtx instanceof Buffer) {
 		tx = bitcoin.Transaction.fromBuffer(rawtx);
 	}
@@ -221,19 +210,19 @@ util.parseTransaction = function(rawtx, networkName) {
 		throw new Error('Invalid data type for rawtx');
 	}
 	// Get encryption key.
-	var key = bufferReverse(tx.ins[0].hash);
+	let key = Buffer.from(reverse(tx.ins[0].hash.toString('hex')), 'hex');
 	// Parse input to determine source pubkey.
-	var source = (function(inputs) {
-		var sources = [];
-		for(var i in inputs) {
-			var input = inputs[i];
+	let source = ((inputs) => {
+		let sources: Buffer[] = [];
+		for(let i in inputs) {
+			let input = inputs[i];
 			if(bitcoin.script.classifyInput(input.script) == 'pubkeyhash') {
-				var pubkey = bitcoin.script.decompile(input.script)[1];
+				let pubkey = <Buffer>bitcoin.script.decompile(input.script)[1];
 				sources.push(pubkey);
 			}
 		}
 		// All input sources should be identical.
-		for(var i=1; i<sources.length; i++) {
+		for(let i=1; i<sources.length; i++) {
 			if(!sources[0].equals(sources[i])) {
 				return null;
 			}
@@ -241,11 +230,11 @@ util.parseTransaction = function(rawtx, networkName) {
 		return sources[0];
 	})(tx.ins);
 	// Parse output.
-	var destination = null;
-	var rawdata = Buffer.alloc(0);
-	for(var i in tx.outs) {
-		var out = tx.outs[i];
-		var type = bitcoin.script.classifyOutput(out.script);
+	let destination = null;
+	let rawdata = Buffer.alloc(0);
+	for(let i in tx.outs) {
+		let out = tx.outs[i];
+		let type = bitcoin.script.classifyOutput(out.script);
 		if(type == 'pubkeyhash') {
 			if(!destination && rawdata.length===0) {
 				destination = {
@@ -255,14 +244,14 @@ util.parseTransaction = function(rawtx, networkName) {
 			}
 		}
 		if(type == 'nulldata') {
-			rawdata = util.arc4(key, bitcoin.script.decompile(out.script)[1]);
+			rawdata = arc4(key, <Buffer>bitcoin.script.decompile(out.script)[1]);
 		}
 		if(type == 'multisig') {
-			var decrypted = util.arc4(key, Buffer.concat([out.script.slice(3, 33), out.script.slice(36, 68)]));
+			let decrypted = arc4(key, Buffer.concat([out.script.slice(3, 33), out.script.slice(36, 68)]));
 			rawdata = Buffer.concat([rawdata, decrypted.slice(1, 1+decrypted[0])]);
 		}
 	}
-	var message;
+	let message;
 	try {
 		message = require('./Message').fromSerialized(rawdata);
 	} catch(e) {
@@ -276,5 +265,14 @@ util.parseTransaction = function(rawtx, networkName) {
 	};
 };
 
-module.exports = util;
+export {
+	getBitcoinJSNetwork,
+	arc4,
+	mnemonicToPrivateKey,
+	assetIdToName,
+	assetNameToId,
+	toAssetId,
+	buildTransaction,
+	parseTransaction,
+};
 

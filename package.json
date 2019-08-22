@@ -4,7 +4,7 @@
     "vim: set expandtab:"
   ],
   "name": "counterjs",
-  "version": "0.0.3",
+  "version": "1.0.1",
   "description": "Counterparty Node.js/JavaScript library.",
   "author": "Vis Virial <visvirial@gmail.com>",
   "license": "MIT",
@@ -15,13 +15,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Fressets/CounterJS.git"
+    "url": "https://github.com/visvirial/CounterJS.git"
   },
-  "main": "src/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "./node_modules/.bin/mocha",
-    "cover": "./node_modules/.bin/istanbul cover _mocha",
-    "coveralls": "npm run cover && ./node_modules/.bin/istanbul-coveralls"
+    "build": "./node_modules/.bin/tsc",
+    "test": "./node_modules/.bin/jest --coverage",
+    "mkdist": "mkdir -p dist",
+    "browser:browserify": "browserify src/index.ts -p [ tsify --noImplicitAny ] --standalone counterjs >dist/bundle.js",
+    "browser:minify": "terser dist/bundle.js --compress --mangle --output dist/bundle.min.js",
+    "browser": "npm run mkdist && npm run browser:browserify && npm run browser:minify"
   },
   "dependencies": {
     "bitcoinjs-lib": "^2.3.0",
@@ -29,23 +33,31 @@
     "long": "^3.2.0"
   },
   "devDependencies": {
-    "babelify": "^7.3.0",
+    "@types/bitcoinjs-lib": "^4.0.1",
+    "@types/jest": "^23.0.0",
+    "@types/long": "^4.0.0",
+    "@types/node": "^12.7.2",
     "browserify": "^13.1.1",
-    "del": "^2.2.2",
-    "gulp": "^4.0.2",
-    "gulp-jshint": "^2.1.0",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^2.0.0",
-    "istanbul": "^0.4.5",
-    "istanbul-coveralls": "^1.0.3",
-    "jshint": "^2.10.2",
-    "jshint-stylish": "^2.2.1",
-    "mocha": "^6.2.0",
-    "pump": "^1.0.1",
-    "vinyl-source-stream": "^1.1.2"
+    "coveralls": "^3.0.6",
+    "jest": "^23.0.0",
+    "terser": "^4.2.0",
+    "ts-jest": "^23.0.0",
+    "tsify": "^4.0.1",
+    "typescript": "^3.5.3"
   },
-  "jshintConfig": {
-    "esversion": 6,
-    "node": true
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "jsx"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "testMatch": [
+      "**/?(*.)+(spec|test).ts"
+    ]
   }
 }
