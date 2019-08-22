@@ -4,6 +4,7 @@ import coininfo from 'coininfo';
 import * as bitcoin from 'bitcoinjs-lib';
 import bufferReverse from 'buffer-reverse';
 
+import MNEMONIC_WORDS from './mnemonic_words';
 import Message from './Message';
 
 const KEY_ASSETS = {
@@ -12,7 +13,6 @@ const KEY_ASSETS = {
 };
 
 const B26DIGITS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const MNEMONIC_WORDS = require('./mnemonic_words.json');
 const MAX_OP_RETURN = 80;
 
 const getBitcoinJSNetwork = (str: string='mainnet'): bitcoin.Network => {

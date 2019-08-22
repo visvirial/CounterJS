@@ -1,7 +1,7 @@
 
 var Long = require('long');
-var util = require('../src/util.js');
-var Message = require('../src/Message.js');
+var util = require('../dist/util.js');
+var Message = require('../dist/Message.js');
 
 var assert = require('assert');
 
