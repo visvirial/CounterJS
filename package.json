@@ -24,6 +24,9 @@
     "coveralls": "npm run cover && ./node_modules/.bin/istanbul-coveralls"
   },
   "dependencies": {
+    "@types/bitcoinjs-lib": "^4.0.1",
+    "@types/long": "^4.0.0",
+    "@types/node": "^12.7.2",
     "bitcoinjs-lib": "^2.3.0",
     "coininfo": "^4.0.0",
     "long": "^3.2.0"
