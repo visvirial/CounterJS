@@ -1,5 +1,6 @@
 
 import Long from 'long';
+
 import * as util from '../util';
 import Message from '../Message';
 
@@ -13,15 +14,15 @@ test('should process ARC4 encryption correctly', () => {
 test('should generate an address from a mnemonic code', () => {
 	const mnemonic = 'spot continue stumble wipe crimson cause sword school blur music sob through';
 	const priv = util.mnemonicToPrivateKey(mnemonic, 0);
-	expect(priv).toEqual('L5WSPy4TdW1x7HAxwRC2QMzpLfAvJD3cu6un9TSr6tA5yRbXqSa7');
+	expect(priv).toBe('L5WSPy4TdW1x7HAxwRC2QMzpLfAvJD3cu6un9TSr6tA5yRbXqSa7');
 });
 
 test('should recover numeric asset name from ID', () => {
-	expect(util.assetIdToName(Long.fromString('ac59c7c2fd194d10', true, 16))).toEqual('A12419177087734730000');
+	expect(util.assetIdToName(Long.fromString('ac59c7c2fd194d10', true, 16))).toBe('A12419177087734730000');
 });
 
 test('should recover alphabetic asset name from ID', () => {
-	expect(util.assetIdToName(Long.fromString('0000040d5cba2a73', true, 16))).toEqual('VISVIRIAL');
+	expect(util.assetIdToName(Long.fromString('0000040d5cba2a73', true, 16))).toBe('VISVIRIAL');
 });
 
 test('should recover asset ID from numeric asset name', () => {
@@ -46,16 +47,14 @@ test('should build a transaction', () => {
 	expect(rawtx.toString('hex')).toBe('0100000001a846b9095330b95f689cef39d3d1871c98f9bc45d9b633fc0860f1e688130e990100000000ffffffff0336150000000000001976a91482eb113f0455107b1788093844f3027595b0b44888ac00000000000000001e6a1c6ad7042493a8749786f99d122f7aaa23dd5ac4d90d98acad76d9a7a92abdf405000000001976a9148be5ed53f1529e493b4c06f945f805b31afb400388ac00000000');
 });
 
-/*
 test('should accept Monacoin network', () => {
-	expect(util.getBitcoinJSNetwork('monacoin').name).toEqual('Monacoin');
+	expect((<any>util._getBitcoinJSNetwork('monacoin')).name).toBe('Monacoin');
 });
-*/
 
-test('should be kept backward compatibilty for getBitcoinJSNetwork()', () => {
-	expect(util.getBitcoinJSNetwork().pubKeyHash).toBe(0);
-	expect(util.getBitcoinJSNetwork('mainnet').pubKeyHash).toBe(0);
-	expect(util.getBitcoinJSNetwork('testnet').pubKeyHash).toBe(0x6f);
+test('should be kept backward compatibilty for _getBitcoinJSNetwork()', () => {
+	expect(util._getBitcoinJSNetwork().pubKeyHash).toBe(0);
+	expect(util._getBitcoinJSNetwork('mainnet').pubKeyHash).toBe(0);
+	expect(util._getBitcoinJSNetwork('testnet').pubKeyHash).toBe(0x6f);
 });
 
 test('should support BTC/XCP on Counterparty network.', () => {
