@@ -30,31 +30,21 @@
     "browser": "npm run mkdist && npm run browser:browserify && npm run browser:minify"
   },
   "dependencies": {
-    "@types/bitcoinjs-lib": "^4.0.1",
-    "@types/long": "^4.0.0",
-    "@types/node": "^12.7.2",
     "bitcoinjs-lib": "^2.3.0",
     "coininfo": "^4.0.0",
     "long": "^3.2.0"
   },
   "devDependencies": {
-    "babelify": "^7.3.0",
+    "@types/bitcoinjs-lib": "^4.0.1",
+    "@types/long": "^4.0.0",
+    "@types/node": "^12.7.2",
     "browserify": "^13.1.1",
-    "del": "^2.2.2",
-    "gulp": "^4.0.2",
-    "gulp-jshint": "^2.1.0",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^2.0.0",
     "istanbul": "^0.4.5",
     "istanbul-coveralls": "^1.0.3",
-    "jshint": "^2.10.2",
-    "jshint-stylish": "^2.2.1",
     "mocha": "^6.2.0",
-    "pump": "^1.0.1",
     "terser": "^4.2.0",
     "tsify": "^4.0.1",
-    "typescript": "^3.5.3",
-    "vinyl-source-stream": "^1.1.2"
+    "typescript": "^3.5.3"
   },
   "jshintConfig": {
     "esversion": 6,
