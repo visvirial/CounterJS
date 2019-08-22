@@ -1,7 +1,7 @@
 
 import Long from 'long';
-import * as util from '../src/util';
-import Message from '../src/Message';
+import * as util from '../util';
+import Message from '../Message';
 
 test('should process ARC4 encryption correctly', () => {
 	const key = Buffer.from('b34ddf8904bcfc454c6f06d33e600942c7ce8f75dd2d46532f263a6e56d83d34', 'hex');

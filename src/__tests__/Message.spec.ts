@@ -1,7 +1,7 @@
 
 import Long from 'long';
-import Message from '../src/Message';
-import * as util from '../src/util';
+import Message from '../Message';
+import * as util from '../util';
 
 const key_old       = Buffer.from('b34ddf8904bcfc454c6f06d33e600942c7ce8f75dd2d46532f263a6e56d83d34', 'hex');
 const encrypted_old = Buffer.from('5e1ef3f99e3a89060c43caacc0a05c15678ef8e9ba96f42e8dc64fa04dda759c2b0f4f8c34b91acf6f86e7', 'hex');
