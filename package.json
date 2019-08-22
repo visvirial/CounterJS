@@ -17,12 +17,17 @@
     "type": "git",
     "url": "https://github.com/visvirial/CounterJS.git"
   },
-  "main": "dest/index.js",
+  "main": "dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "tsc": "./node_modules/.bin/tsc",
     "test": "./node_modules/.bin/mocha",
     "cover": "./node_modules/.bin/istanbul cover _mocha",
-    "coveralls": "npm run cover && ./node_modules/.bin/istanbul-coveralls"
+    "coveralls": "npm run cover && ./node_modules/.bin/istanbul-coveralls",
+    "mkdist": "mkdir -p dist",
+    "browser:browserify": "browserify src/index.ts -p [ tsify --noImplicitAny ] --standalone counterjs >dist/bundle.js",
+    "browser:minify": "terser dist/bundle.js --compress --mangle --output dist/bundle.min.js",
+    "browser": "npm run mkdist && npm run browser:browserify && npm run browser:minify"
   },
   "dependencies": {
     "@types/bitcoinjs-lib": "^4.0.1",
@@ -46,6 +51,8 @@
     "jshint-stylish": "^2.2.1",
     "mocha": "^6.2.0",
     "pump": "^1.0.1",
+    "terser": "^4.2.0",
+    "tsify": "^4.0.1",
     "typescript": "^3.5.3",
     "vinyl-source-stream": "^1.1.2"
   },
